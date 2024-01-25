@@ -1,0 +1,47 @@
+------------------------------
+Iteration: 1
+Number of clients: 1
+Duration nanos: 7185542
+------------------------------
+Iteration: 2
+Number of clients: 1
+Duration nanos: 422791
+------------------------------
+Iteration: 3
+Number of clients: 1
+Duration nanos: 302542
+------------------------------
+Iteration: 4
+Number of clients: 1
+Duration nanos: 269916
+------------------------------
+Iteration: 5
+Number of clients: 1
+Duration nanos: 323416
+------------------------------
+Iteration: 6
+Number of clients: 1
+Duration nanos: 322750
+------------------------------
+Iteration: 7
+Number of clients: 1
+Duration nanos: 345083
+------------------------------
+Iteration: 8
+Number of clients: 1
+Duration nanos: 325667
+------------------------------
+Iteration: 9
+Number of clients: 1
+Duration nanos: 382667
+------------------------------
+Iteration: 10
+Number of clients: 1
+Duration nanos: 340417
+------------RESULTS-----------
+Number of clients: 1
+Number of iterations: 10
+Min duration nanos: 269916
+Max duration nanos: 7185542
+Average duration nanos: 1022079.1
+Average duration millis: 1.0220791
