@@ -1,3 +1,5 @@
+package utils
+
 const val DATA_ARRAY_SIZE = 3 * 1024 // 3 KB
 val DATA_ARRAY = ByteArray(DATA_ARRAY_SIZE)
 
