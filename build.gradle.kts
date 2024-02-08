@@ -15,6 +15,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$kotlinx_coroutines")
 }
 
 tasks.test {
