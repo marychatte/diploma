@@ -1,11 +1,11 @@
 ------------------------------
 Iteration: 1
 Number of clients: 1000
-Duration nanos: 539896167
+Duration nanos: 520588250
 ------------RESULTS-----------
 Number of clients: 1000
 Number of iterations: 1
-Min duration nanos: 539896167
-Max duration nanos: 539896167
-Average duration nanos: 5.39896167E8
-Average duration millis: 539.896167
+Min duration nanos: 520588250
+Max duration nanos: 520588250
+Average duration nanos: 5.2058825E8
+Average duration millis: 520.58825

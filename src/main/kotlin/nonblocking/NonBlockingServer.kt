@@ -30,19 +30,32 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
     }
 
     private suspend fun processClient(innerScope: CoroutineScope, acceptSelectionKey: SelectionKey) {
-        selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
-        val clientChannel = serverSocketChannel.accept().apply { configureBlocking(false) }
+        var clientAccepted = false
+        while (!clientAccepted) {
+            selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
+            val clientChannel = serverSocketChannel.accept()
+                ?.apply { configureBlocking(false) }
+                ?: continue
+            clientAccepted = true
 
-        if (timeNano == -1L) {
-            timeNano = System.nanoTime()
-        }
+            if (timeNano == -1L) {
+                timeNano = System.nanoTime()
+            }
 
-        val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
-        innerScope.launch {
-            clientChannel.writeTo(selectionKey, selectorManager)
-        }
-        innerScope.launch {
-            clientChannel.readFrom(selectionKey, selectorManager)
+            val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
+            val writeJob = innerScope.launch {
+                clientChannel.writeTo(selectionKey, selectorManager)
+            }
+            val readJob = innerScope.launch {
+                clientChannel.readFrom(selectionKey, selectorManager)
+            }
+
+            writeJob.invokeOnCompletion {
+                readJob.invokeOnCompletion {
+                    selectionKey.cancel()
+                    clientChannel.close()
+                }
+            }
         }
     }
 

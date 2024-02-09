@@ -2,6 +2,7 @@ package nonblocking
 
 import kotlinx.coroutines.*
 import java.io.Closeable
+import java.nio.channels.CancelledKeyException
 import java.nio.channels.SelectableChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
@@ -25,36 +26,30 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
             while (selectionKeys.hasNext()) {
                 val key = selectionKeys.next()
                 selectionKeys.remove()
-                if (!key.isValid) {
-                    continue
-                }
-
-                val keyMap = selectionKeysToContinuation[key.channel()] ?: continue
-                if (key.isReadable) {
-                    keyMap[SelectionKey.OP_READ]?.let { continuation ->
-                        keyMap.remove(SelectionKey.OP_READ)
-                        continuation.resume(Unit)
-                    }
-                }
-                if (key.isWritable) {
-                    keyMap[SelectionKey.OP_WRITE]?.let { continuation ->
-                        keyMap.remove(SelectionKey.OP_WRITE)
-                        continuation.resume(Unit)
-                    }
-                }
-                if (key.isAcceptable) {
-                    keyMap[SelectionKey.OP_ACCEPT]?.let { continuation ->
-                        keyMap.remove(SelectionKey.OP_ACCEPT)
-                        continuation.resume(Unit)
-                    }
-                }
-                if (key.isConnectable) {
-                    keyMap[SelectionKey.OP_CONNECT]?.let { continuation ->
-                        keyMap.remove(SelectionKey.OP_CONNECT)
-                        continuation.resume(Unit)
-                    }
+                try {
+                    if (!key.isValid) continue
+                    processKey(key)
+                } catch (e: CancelledKeyException) {
+                    key.channel().close()
                 }
             }
+        }
+    }
+
+    private fun processKey(key: SelectionKey) {
+        val keyMap = selectionKeysToContinuation[key.channel()] ?: return
+        when {
+            key.isReadable -> resumeContinuation(keyMap, SelectionKey.OP_READ)
+            key.isWritable -> resumeContinuation(keyMap, SelectionKey.OP_WRITE)
+            key.isAcceptable -> resumeContinuation(keyMap, SelectionKey.OP_ACCEPT)
+            key.isConnectable -> resumeContinuation(keyMap, SelectionKey.OP_CONNECT)
+        }
+    }
+
+    private fun resumeContinuation(keyMap: ConcurrentHashMap<Int, Continuation<Unit>>, interest: Int) {
+        keyMap[interest]?.let { continuation ->
+            keyMap.remove(interest)
+            continuation.resume(Unit)
         }
     }
 
