@@ -16,8 +16,6 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + CoroutineName("ReactorSelectorManager")
 
     private val selector: Selector = Selector.open()
-    private val selectionKeysToContinuation: ConcurrentHashMap<SelectableChannel, ConcurrentHashMap<Int, Continuation<Unit>>> =
-        ConcurrentHashMap()
 
     private val job: Job = launch {
         while (true) {
@@ -28,7 +26,9 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
                 selectionKeys.remove()
                 try {
                     if (!key.isValid) continue
-                    processKey(key)
+
+                    val attachment = key.attachment() as Attachment
+                    attachment.resumeContinuation(key)
                 } catch (e: CancelledKeyException) {
                     key.channel().close()
                 }
@@ -36,27 +36,11 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
         }
     }
 
-    private fun processKey(key: SelectionKey) {
-        val keyMap = selectionKeysToContinuation[key.channel()] ?: return
-        when {
-            key.isReadable -> resumeContinuation(keyMap, SelectionKey.OP_READ)
-            key.isWritable -> resumeContinuation(keyMap, SelectionKey.OP_WRITE)
-            key.isAcceptable -> resumeContinuation(keyMap, SelectionKey.OP_ACCEPT)
-            key.isConnectable -> resumeContinuation(keyMap, SelectionKey.OP_CONNECT)
-        }
-    }
-
-    private fun resumeContinuation(keyMap: ConcurrentHashMap<Int, Continuation<Unit>>, interest: Int) {
-        keyMap[interest]?.let { continuation ->
-            keyMap.remove(interest)
-            continuation.resume(Unit)
-        }
-    }
-
     suspend fun select(selectionKey: SelectionKey, interest: Int) {
         suspendCoroutine { continuation ->
-            selectionKeysToContinuation.putIfAbsent(selectionKey.channel(), ConcurrentHashMap())
-            selectionKeysToContinuation[selectionKey.channel()]?.set(interest, continuation)
+            (selectionKey.attachment() as Attachment).apply {
+                addContinuation(interest, continuation)
+            }
         }
     }
 
@@ -64,7 +48,7 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
         val result = channel.keyFor(selector)?.apply {
             interestOpsOr(interest)
         } ?: let {
-            channel.register(selector, interest)
+            channel.register(selector, interest, Attachment())
         }
         selector.wakeup()
         return result
@@ -75,8 +59,31 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
     }
 
     override fun close() {
-        selector.close()
         job.cancel()
+        job.invokeOnCompletion { selector.close() }
         coroutineContext.cancel()
+    }
+}
+
+private class Attachment {
+    val interestToContinuationMap: ConcurrentHashMap<Int, Continuation<Unit>> = ConcurrentHashMap()
+
+    fun addContinuation(interest: Int, continuation: Continuation<Unit>) {
+        interestToContinuationMap[interest] = continuation
+    }
+
+    fun resumeContinuation(key: SelectionKey) {
+        when {
+            key.isReadable -> resumeContinuation(SelectionKey.OP_READ)
+            key.isWritable -> resumeContinuation(SelectionKey.OP_WRITE)
+            key.isAcceptable -> resumeContinuation(SelectionKey.OP_ACCEPT)
+            key.isConnectable -> resumeContinuation(SelectionKey.OP_CONNECT)
+        }
+    }
+
+    fun resumeContinuation(interest: Int) {
+        val continuation = interestToContinuationMap[interest] ?: return
+        interestToContinuationMap.remove(interest)
+        continuation.resume(Unit)
     }
 }
