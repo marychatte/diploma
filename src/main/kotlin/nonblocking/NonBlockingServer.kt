@@ -6,8 +6,6 @@ import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
 
 class NonBlockingServer(private val numberOfClients: Int, private val serverPort: Int) {
-    private val scope = CoroutineScope(Dispatchers.Default) + CoroutineName("NonBlockingServer")
-
     private val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
         configureBlocking(false)
         bind(InetSocketAddress(serverPort), numberOfClients + 1)
@@ -20,7 +18,7 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
     suspend fun start() {
         val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
 
-        withContext(scope.coroutineContext) {
+        coroutineScope {
             for (i in 1..numberOfClients) {
                 processClient(this, selectionKeyAccept)
             }
@@ -29,7 +27,7 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
         timeNano = System.nanoTime() - timeNano
     }
 
-    private suspend fun processClient(innerScope: CoroutineScope, acceptSelectionKey: SelectionKey) {
+    private suspend fun processClient(scope: CoroutineScope, acceptSelectionKey: SelectionKey) {
         var clientAccepted = false
         while (!clientAccepted) {
             selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
@@ -43,10 +41,10 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
             }
 
             val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
-            val writeJob = innerScope.launch {
+            val writeJob = scope.launch {
                 clientChannel.writeTo(selectionKey, selectorManager)
             }
-            val readJob = innerScope.launch {
+            val readJob = scope.launch {
                 clientChannel.readFrom(selectionKey, selectorManager)
             }
 
@@ -62,6 +60,5 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
     fun stop() {
         selectorManager.close()
         serverSocketChannel.close()
-        scope.cancel()
     }
 }
