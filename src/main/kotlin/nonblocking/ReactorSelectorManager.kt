@@ -20,7 +20,7 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
         ConcurrentHashMap()
 
     private val job: Job = launch {
-        while (isActive && selector.isOpen) {
+        while (true) {
             selector.select()
             val selectionKeys = selector.selectedKeys().iterator()
             while (selectionKeys.hasNext()) {
@@ -75,8 +75,8 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
     }
 
     override fun close() {
+        selector.close()
         job.cancel()
-        job.invokeOnCompletion { selector.close() }
         coroutineContext.cancel()
     }
 }
