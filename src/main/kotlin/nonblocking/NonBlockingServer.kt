@@ -1,6 +1,7 @@
 package nonblocking
 
 import kotlinx.coroutines.*
+import utils.DATA_BUFFER
 import java.net.InetSocketAddress
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
@@ -42,7 +43,7 @@ class NonBlockingServer(private val numberOfClients: Int, private val serverPort
 
             val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
             val writeJob = scope.launch {
-                clientChannel.writeTo(selectionKey, selectorManager)
+                clientChannel.writeTo(selectionKey, selectorManager, DATA_BUFFER.duplicate())
             }
             val readJob = scope.launch {
                 clientChannel.readFrom(selectionKey, selectorManager)

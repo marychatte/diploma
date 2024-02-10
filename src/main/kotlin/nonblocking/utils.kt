@@ -1,7 +1,6 @@
 package nonblocking
 
 import utils.DATA_ARRAY_SIZE
-import utils.DATA_BUFFER
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.SocketChannel
@@ -9,13 +8,12 @@ import java.nio.channels.SocketChannel
 suspend fun SocketChannel.writeTo(
     selectionKey: SelectionKey,
     selectorManager: ReactorSelectorManager,
-    buffer: ByteBuffer = DATA_BUFFER
+    buffer: ByteBuffer
 ) {
-    val writeBuffer = buffer.duplicate()
     var writeCount = 0
     while (true) {
         selectorManager.select(selectionKey, SelectionKey.OP_WRITE)
-        val curWriteCount = write(writeBuffer)
+        val curWriteCount = write(buffer)
         writeCount += curWriteCount
 
         if (writeCount >= DATA_ARRAY_SIZE) {
