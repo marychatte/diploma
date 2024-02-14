@@ -6,7 +6,6 @@ import java.nio.channels.CancelledKeyException
 import java.nio.channels.SelectableChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
@@ -66,24 +65,36 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
 }
 
 private class Attachment {
-    val interestToContinuationMap: ConcurrentHashMap<Int, Continuation<Unit>> = ConcurrentHashMap()
+    private var acceptContinuation: Continuation<Unit>? = null
+    private var readContinuation: Continuation<Unit>? = null
+    private var writeContinuation: Continuation<Unit>? = null
+    private var connectContinuation: Continuation<Unit>? = null
 
     fun addContinuation(interest: Int, continuation: Continuation<Unit>) {
-        interestToContinuationMap[interest] = continuation
+        setContinuationByInterest(interest, continuation)
     }
 
     fun resumeContinuation(key: SelectionKey) {
         when {
-            key.isReadable -> resumeContinuation(SelectionKey.OP_READ)
-            key.isWritable -> resumeContinuation(SelectionKey.OP_WRITE)
-            key.isAcceptable -> resumeContinuation(SelectionKey.OP_ACCEPT)
-            key.isConnectable -> resumeContinuation(SelectionKey.OP_CONNECT)
+            key.isAcceptable -> acceptContinuation.resume(SelectionKey.OP_ACCEPT)
+            key.isReadable -> readContinuation.resume(SelectionKey.OP_READ)
+            key.isWritable -> writeContinuation.resume(SelectionKey.OP_WRITE)
+            key.isConnectable -> connectContinuation.resume(SelectionKey.OP_CONNECT)
         }
     }
 
-    fun resumeContinuation(interest: Int) {
-        val continuation = interestToContinuationMap[interest] ?: return
-        interestToContinuationMap.remove(interest)
-        continuation.resume(Unit)
+    private fun Continuation<Unit>?.resume(interest: Int) {
+        val tmp = this ?: return
+        setContinuationByInterest(interest, null)
+        tmp.resume(Unit)
+    }
+
+    private fun setContinuationByInterest(interest: Int, continuation: Continuation<Unit>?) {
+        when (interest) {
+            SelectionKey.OP_ACCEPT -> acceptContinuation = continuation
+            SelectionKey.OP_READ -> readContinuation = continuation
+            SelectionKey.OP_WRITE -> writeContinuation = continuation
+            SelectionKey.OP_CONNECT -> connectContinuation = continuation
+        }
     }
 }
