@@ -1,24 +1,22 @@
+package blocking
+
+import utils.DATA_ARRAY
+import utils.DATA_ARRAY_SIZE
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.net.ServerSocket
-import kotlin.properties.Delegates
-import kotlin.system.measureNanoTime
 
-class Server(
-    private val numberOfClients: Int = 1,
-    serverPort: Int,
-) {
-    var timeNano: Long by Delegates.notNull()
+class BlockingServer(private val numberOfClients: Int = 1, private val serverPort: Int) {
+    private val serverSocket = ServerSocket(serverPort, numberOfClients + 1)
+    var timeNano: Long = -1
         private set
 
-    private val serverSocket = ServerSocket(serverPort, numberOfClients + 1)
-
     fun start() {
-        timeNano = measureNanoTime {
-            repeat(numberOfClients) {
-                handleClient()
-            }
+        repeat(numberOfClients) {
+            handleClient()
         }
+
+        timeNano = System.nanoTime() - timeNano
     }
 
     fun stop() {
@@ -27,6 +25,9 @@ class Server(
 
     private fun handleClient() {
         val clientSocket = serverSocket.accept()
+        if (timeNano == -1L) {
+            timeNano = System.nanoTime()
+        }
 
         val outputStream = DataOutputStream(clientSocket.getOutputStream())
         outputStream.write(DATA_ARRAY)

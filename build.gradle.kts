@@ -1,4 +1,5 @@
 val kotlinx_coroutines: String by project
+val kotlinx_cli: String by project
 
 plugins {
     kotlin("jvm") version "1.9.22"
@@ -13,8 +14,9 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines")
+    implementation("org.jetbrains.kotlinx:kotlinx-cli:$kotlinx_cli")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
@@ -23,8 +25,4 @@ tasks.test {
 
 kotlin {
     jvmToolchain(17)
-}
-
-application {
-    mainClass.set("MainKt")
 }

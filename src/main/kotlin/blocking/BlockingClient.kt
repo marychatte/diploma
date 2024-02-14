@@ -1,11 +1,11 @@
+package blocking
+
+import utils.DATA_ARRAY_SIZE
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.net.Socket
 
-class Client(
-    private val serverAddress: String,
-    private val serverPort: Int,
-) {
+class BlockingClient(private val serverAddress: String, private val serverPort: Int) {
     fun start() {
         val clientSocket = Socket(serverAddress, serverPort)
 
