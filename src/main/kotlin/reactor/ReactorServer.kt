@@ -1,4 +1,4 @@
-package nonblocking
+package reactor
 
 import kotlinx.coroutines.*
 import utils.DATA_BUFFER
@@ -6,7 +6,7 @@ import java.net.InetSocketAddress
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
 
-class NonBlockingServer(private val numberOfClients: Int, private val serverPort: Int) {
+class ReactorServer(private val numberOfClients: Int, private val serverPort: Int) {
     private val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
         configureBlocking(false)
         bind(InetSocketAddress(serverPort), numberOfClients + 1)

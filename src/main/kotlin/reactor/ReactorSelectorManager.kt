@@ -1,4 +1,4 @@
-package nonblocking
+package reactor
 
 import kotlinx.coroutines.*
 import java.io.Closeable

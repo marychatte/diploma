@@ -13,14 +13,16 @@ suspend fun main(args: Array<String>) {
         Service.SERVER -> {
             when (type) {
                 TYPE.BLOCKING -> runBlockingServer()
-                TYPE.NONBLOCKING -> runNonBlockingServer()
+                TYPE.REACTOR -> runReactorServer()
+                TYPE.NETTY -> runNettyServer()
             }
         }
 
         Service.CLIENT -> {
             when (type) {
                 TYPE.BLOCKING -> runBlockingClient()
-                TYPE.NONBLOCKING -> TODO("not implemented")
+                TYPE.REACTOR -> TODO("not implemented")
+                TYPE.NETTY -> TODO("not implemented")
             }
         }
     }
@@ -33,5 +35,6 @@ enum class Service {
 
 enum class TYPE {
     BLOCKING,
-    NONBLOCKING,
+    REACTOR,
+    NETTY,
 }
