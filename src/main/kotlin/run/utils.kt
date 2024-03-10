@@ -4,15 +4,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import utils.COUNT_OF_CLIENTS
 import utils.COUNT_OF_ITERATIONS
-import utils.FILE_NAME
 import utils.ResultWriter
 
-suspend fun runServer(serverRun: suspend () -> Long) = runBlocking {
+suspend fun runServer(type: String, serverRun: suspend () -> Long) = runBlocking {
     val time = serverRun()
     ResultWriter(
         listOf(time),
         COUNT_OF_CLIENTS,
-        FILE_NAME,
+        "results/1_${type}_server_${COUNT_OF_CLIENTS}_blocking_clients.txt",
         COUNT_OF_ITERATIONS
     ).write()
 }

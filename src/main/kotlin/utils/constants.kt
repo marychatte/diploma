@@ -12,5 +12,3 @@ const val SERVER_PORT = 12345
 const val COUNT_OF_ITERATIONS = 1
 
 const val COUNT_OF_CLIENTS = 1000
-
-const val FILE_NAME = "results/1_non-blocking_server_${COUNT_OF_CLIENTS}_blocking_clients.txt"
