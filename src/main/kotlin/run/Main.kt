@@ -14,6 +14,7 @@ suspend fun main(args: Array<String>) {
             when (type) {
                 TYPE.BLOCKING -> runBlockingServer()
                 TYPE.NONBLOCKING -> runNonBlockingServer()
+                TYPE.EVENTLOOP -> runEventLoopServer()
             }
         }
 
@@ -21,6 +22,7 @@ suspend fun main(args: Array<String>) {
             when (type) {
                 TYPE.BLOCKING -> runBlockingClient()
                 TYPE.NONBLOCKING -> TODO("not implemented")
+                TYPE.EVENTLOOP -> TODO("not implemented")
             }
         }
     }
@@ -34,4 +36,5 @@ enum class Service {
 enum class TYPE {
     BLOCKING,
     NONBLOCKING,
+    EVENTLOOP,
 }
