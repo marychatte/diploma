@@ -1,6 +1,6 @@
 package reactor
 
-import utils.DATA_ARRAY_SIZE
+import utils.REQUEST_SIZE
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.SocketChannel
@@ -16,7 +16,7 @@ suspend fun SocketChannel.writeTo(
         val curWriteCount = write(buffer)
         writeCount += curWriteCount
 
-        if (writeCount >= DATA_ARRAY_SIZE) {
+        if (writeCount == buffer.capacity()) {
             break
         }
     }
@@ -25,7 +25,7 @@ suspend fun SocketChannel.writeTo(
 
 suspend fun SocketChannel.readFrom(selectionKey: SelectionKey, selectorManager: ReactorSelectorManager): ByteBuffer {
     var readCount = 0
-    val readBuffer = ByteBuffer.allocate(DATA_ARRAY_SIZE)
+    val readBuffer = ByteBuffer.allocate(REQUEST_SIZE * 5)
 
     while (true) {
         selectorManager.select(selectionKey, SelectionKey.OP_READ)
@@ -33,7 +33,7 @@ suspend fun SocketChannel.readFrom(selectionKey: SelectionKey, selectorManager: 
         val curReadCount = read(readBuffer)
         readCount += curReadCount
 
-        if (curReadCount == -1 || readCount >= DATA_ARRAY_SIZE) {
+        if (curReadCount == -1 || readCount >= REQUEST_SIZE) {
             break
         }
     }

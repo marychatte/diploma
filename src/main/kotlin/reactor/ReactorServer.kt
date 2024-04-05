@@ -1,7 +1,7 @@
 package reactor
 
 import kotlinx.coroutines.*
-import utils.DATA_BUFFER
+import utils.RESPONSE_BUFFER
 import java.net.InetSocketAddress
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
@@ -43,7 +43,7 @@ class ReactorServer(private val numberOfClients: Int, private val serverPort: In
 
             val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
             val writeJob = scope.launch {
-                clientChannel.writeTo(selectionKey, selectorManager, DATA_BUFFER.duplicate())
+                clientChannel.writeTo(selectionKey, selectorManager, RESPONSE_BUFFER.duplicate())
             }
             val readJob = scope.launch {
                 clientChannel.readFrom(selectionKey, selectorManager)
