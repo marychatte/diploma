@@ -36,8 +36,7 @@ class BlockingServer {
 
                     if (!receivedByteArray.isHttRequest()) break
 
-//                    require(receivedByteArray.size == REQUEST_SIZE)
-//                    require(String(receivedByteArray).split("$NEW_LINE$NEW_LINE")[1] == String(BODY))
+//                    receivedByteArray.checkRequest()
 
                     val outputStream = DataOutputStream(clientSocket.getOutputStream())
                     outputStream.write(RESPONSE)

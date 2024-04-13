@@ -1,0 +1,45 @@
+Server type: reactor
+
+Running 10s test @ http://localhost:12345/
+  1 threads and 1 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    85.32us  460.86us  14.53ms   98.64%
+    Req/Sec    21.50k     2.99k   30.44k    81.19%
+  Latency Distribution
+     50%   41.00us
+     75%   55.00us
+     90%   78.00us
+     99%    0.99ms
+  215977 requests in 10.10s, 641.19MB read
+Requests/sec:  21385.58
+Transfer/sec:     63.49MB
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 10 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   116.46us  167.78us   6.51ms   98.76%
+    Req/Sec     9.35k     1.02k   11.03k    85.52%
+  Latency Distribution
+     50%   99.00us
+     75%  115.00us
+     90%  134.00us
+     99%  341.00us
+  751513 requests in 10.10s, 2.18GB read
+Requests/sec:  74395.99
+Transfer/sec:    220.87MB
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     0.00us    0.00us   0.00us     nan%
+    Req/Sec     0.00      0.00     0.00       nan%
+  Latency Distribution
+     50%    0.00us
+     75%    0.00us
+     90%    0.00us
+     99%    0.00us
+  0 requests in 10.10s, 0.00B read
+  Socket errors: connect 0, read 19, write 1, timeout 0
+Requests/sec:      0.00
+Transfer/sec:       0.00B
+

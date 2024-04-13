@@ -11,27 +11,47 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class ReactorSelectorManager : CoroutineScope, Closeable {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default + CoroutineName("ReactorSelectorManager")
-
+class ReactorSelectorManager {
     private val selector: Selector = Selector.open()
 
-    private val job: Job = launch {
+    private var runJob: Job? = null
+
+    fun cancel() {
+        runJob?.cancel()
+    }
+
+    fun runOn(scope: CoroutineScope) {
+        runJob = scope.launch {
+            run()
+        }
+    }
+
+    private fun run() {
         while (true) {
             selector.select()
             val selectionKeys = selector.selectedKeys().iterator()
+            var a_k = 0
+            var r_k = 0
+            var w_k = 0
+
             while (selectionKeys.hasNext()) {
                 val key = selectionKeys.next()
                 selectionKeys.remove()
                 try {
                     if (!key.isValid) continue
+                    if (key.isAcceptable)
+                        a_k++
+                    if (key.isReadable) r_k++
+                    if (key.isWritable) w_k++
 
                     val attachment = key.attachment() as Attachment
                     attachment.resumeContinuation(key)
-                } catch (e: CancelledKeyException) {
+                } catch (e: Throwable) {
                     key.channel().close()
                 }
             }
+
+            println("Acceptable: $a_k, Readable: $r_k, Writable: $w_k")
         }
     }
 
@@ -55,12 +75,6 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
 
     fun deleteInterest(selectionKey: SelectionKey, interest: Int) {
         selectionKey.interestOpsAnd(interest.inv())
-    }
-
-    override fun close() {
-        job.cancel()
-        job.invokeOnCompletion { selector.close() }
-        coroutineContext.cancel()
     }
 }
 

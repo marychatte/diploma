@@ -1,5 +1,6 @@
 package run
 
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import utils.COUNT_OF_CLIENTS
 import utils.COUNT_OF_ITERATIONS
@@ -15,7 +16,7 @@ suspend fun runServer(type: String, serverRun: suspend () -> Long) = runBlocking
     ).write()
 }
 
-fun runClient(clientRun: () -> Unit)  {
+fun runClient(clientRun: () -> Unit) {
     (1..COUNT_OF_CLIENTS).map {
         Thread {
             try {
