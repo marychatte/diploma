@@ -31,3 +31,5 @@ const val SERVER_BACKLOG = 20000
 const val COUNT_OF_ITERATIONS = 1
 
 const val COUNT_OF_CLIENTS = 1000
+
+const val DEBUG = false
