@@ -13,28 +13,32 @@ class EventLoopServer(private val numberOfClients: Int, private val serverPort: 
         bind(InetSocketAddress(serverPort), numberOfClients + 1)
         configureBlocking(false)
     }
-    private val eventLoop: EventLoop = EventLoopImpl()
 
     var timeNano: Long = -1
         private set
 
     suspend fun start() {
+        val loop = EventLoopImpl()
         coroutineScope {
-            val channel = eventLoop.register(serverChannel)
+            loop.runOn(this)
+
+            val channel = loop.register(serverChannel)
+
             for (i in 1..numberOfClients) {
                 processClient(channel, this)
             }
         }
+        loop.close()
         timeNano = System.nanoTime() - timeNano
     }
 
-    private suspend fun processClient(channel: RegisteredServerChannel, coroutineScope: CoroutineScope) {
+    private suspend fun processClient(channel: RegisteredServerChannel, serverScope: CoroutineScope) {
         val connection = channel.acceptConnection()
         if (timeNano == -1L) {
             timeNano = System.nanoTime()
         }
 
-        coroutineScope.launch {
+        serverScope.launch {
             val buffer = ByteBuffer.allocate(DATA_ARRAY_SIZE)
             connection.performWrite { it.write(buffer) }
 

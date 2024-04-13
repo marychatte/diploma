@@ -1,14 +1,17 @@
 package eventloop
 
+import kotlinx.coroutines.CoroutineScope
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
 interface EventLoop {
+    fun runOn(scope: CoroutineScope)
+
     suspend fun register(channel: ServerSocketChannel): RegisteredServerChannel
 
     suspend fun acceptConnection(channel: SocketChannel): Connection
 
-    fun close()
+    fun close(cause: Throwable? = null)
 }
 
 interface RegisteredServerChannel {
