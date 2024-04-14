@@ -15,6 +15,7 @@ suspend fun main(args: Array<String>) {
                 TYPE.BLOCKING -> runBlockingServer()
                 TYPE.REACTOR -> runReactorServer()
                 TYPE.NETTY -> runNettyServer()
+                TYPE.EVENTLOOP -> runEventLoopServer()
             }
         }
 
@@ -23,6 +24,7 @@ suspend fun main(args: Array<String>) {
                 TYPE.BLOCKING -> runBlockingClient()
                 TYPE.REACTOR -> TODO("not implemented")
                 TYPE.NETTY -> TODO("not implemented")
+                TYPE.EVENTLOOP -> TODO("not implemented")
             }
         }
     }
@@ -37,4 +39,5 @@ enum class TYPE {
     BLOCKING,
     REACTOR,
     NETTY,
+    EVENTLOOP,
 }
