@@ -12,7 +12,6 @@ class BlockingServer {
         setOption(StandardSocketOptions.SO_REUSEPORT, true)
         setOption(StandardSocketOptions.SO_REUSEADDR, true)
     }
-    var timeNano: Long = -1
 
     fun start() {
         while (true) {

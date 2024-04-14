@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import utils.RESPONSE_BUFFER
+import utils.checkRequest
 import utils.isHttRequest
 import java.net.InetSocketAddress
 import java.net.StandardSocketOptions
@@ -17,9 +18,6 @@ class ReactorServer(private val serverPort: Int) {
         setOption(StandardSocketOptions.SO_REUSEPORT, true)
         setOption(StandardSocketOptions.SO_REUSEADDR, true)
     }
-
-    var timeNano: Long = -1
-        private set
 
     suspend fun start() {
         supervisorScope {
@@ -54,21 +52,20 @@ class ReactorServer(private val serverPort: Int) {
             ?.apply { configureBlocking(false) }
             ?: return
 
-        println("Client $i accepted")
         scope.launch {
             val selectionKey = selectorManager.addInterest(
                 clientChannel,
                 SelectionKey.OP_READ or SelectionKey.OP_WRITE
             )
             try {
-//                while (true) {
+                while (true) {
                     val receivedBuffer = clientChannel.readFrom(selectionKey, selectorManager)
 
-//                    if (!receivedBuffer.isHttRequest()) break
-//                    receivedBuffer.checkRequest()
+                    if (!receivedBuffer.isHttRequest()) break
+                    receivedBuffer.checkRequest()
 
                     clientChannel.writeTo(selectionKey, selectorManager, RESPONSE_BUFFER.duplicate())
-//                }
+                }
             } catch (e: Throwable) {
                 println("Exception: ${e.message}")
             }

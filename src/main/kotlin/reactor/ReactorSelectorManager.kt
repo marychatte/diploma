@@ -30,19 +30,12 @@ class ReactorSelectorManager {
         while (true) {
             selector.select()
             val selectionKeys = selector.selectedKeys().iterator()
-            var a_k = 0
-            var r_k = 0
-            var w_k = 0
 
             while (selectionKeys.hasNext()) {
                 val key = selectionKeys.next()
                 selectionKeys.remove()
                 try {
                     if (!key.isValid) continue
-                    if (key.isAcceptable)
-                        a_k++
-                    if (key.isReadable) r_k++
-                    if (key.isWritable) w_k++
 
                     val attachment = key.attachment() as Attachment
                     attachment.resumeContinuation(key)
@@ -50,8 +43,6 @@ class ReactorSelectorManager {
                     key.channel().close()
                 }
             }
-
-            println("Acceptable: $a_k, Readable: $r_k, Writable: $w_k")
         }
     }
 

@@ -1,9 +1,11 @@
 package eventloop
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import utils.DATA_ARRAY_SIZE
+import utils.REQUEST_SIZE
+import utils.RESPONSE_BUFFER
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
@@ -14,40 +16,35 @@ class EventLoopServer(private val numberOfClients: Int, private val serverPort: 
         configureBlocking(false)
     }
 
-    var timeNano: Long = -1
-        private set
+    private val eventLoop = EventLoopImpl()
 
     suspend fun start() {
-        val loop = EventLoopImpl()
-        coroutineScope {
-            loop.runOn(this)
+        eventLoop.runOn(CoroutineScope(Dispatchers.IO))
 
-            val channel = loop.register(serverChannel)
+        coroutineScope {
+            val channel = eventLoop.register(serverChannel)
 
             for (i in 1..numberOfClients) {
                 processClient(channel, this)
             }
         }
-        loop.close()
-        timeNano = System.nanoTime() - timeNano
+    }
+
+    fun stop() {
+        eventLoop.close()
+        serverChannel.close()
     }
 
     private suspend fun processClient(channel: RegisteredServerChannel, serverScope: CoroutineScope) {
         val connection = channel.acceptConnection()
-        if (timeNano == -1L) {
-            timeNano = System.nanoTime()
-        }
 
         serverScope.launch {
-            val buffer = ByteBuffer.allocate(DATA_ARRAY_SIZE)
-            connection.performWrite { it.write(buffer) }
+            connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
 
-            val readBuffer = ByteBuffer.allocate(DATA_ARRAY_SIZE)
+            val readBuffer = ByteBuffer.allocate(REQUEST_SIZE)
             connection.performRead {
                 it.read(readBuffer)
             }
-
-            assert(readBuffer.array().contentEquals(buffer.array()))
         }
     }
 }

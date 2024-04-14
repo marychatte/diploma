@@ -31,21 +31,3 @@ const val SERVER_BACKLOG = 20000
 const val COUNT_OF_ITERATIONS = 1
 
 const val COUNT_OF_CLIENTS = 1000
-
-fun ByteArray.isHttRequest(): Boolean {
-    return String(take(HTTP_REQUEST.length).toByteArray()) == HTTP_REQUEST
-}
-
-fun ByteBuffer.isHttRequest(): Boolean {
-    return String(array().take(HTTP_REQUEST.length).toByteArray()) == HTTP_REQUEST
-}
-
-fun ByteArray.checkRequest() {
-    require(size == REQUEST_SIZE)
-    require(String(this).split("$NEW_LINE$NEW_LINE")[1] == String(BODY))
-}
-
-fun ByteBuffer.checkRequest() {
-    require(limit() == REQUEST_SIZE)
-    require(String(array()).split("$NEW_LINE$NEW_LINE")[1] == String(BODY))
-}

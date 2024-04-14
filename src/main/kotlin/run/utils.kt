@@ -1,19 +1,10 @@
 package run
 
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import utils.COUNT_OF_CLIENTS
-import utils.COUNT_OF_ITERATIONS
-import utils.ResultWriter
 
-suspend fun runServer(type: String, serverRun: suspend () -> Long) = runBlocking {
-    val time = serverRun()
-    ResultWriter(
-        listOf(time),
-        COUNT_OF_CLIENTS,
-        "results/1_${type}_server_${COUNT_OF_CLIENTS}_blocking_clients.txt",
-        COUNT_OF_ITERATIONS
-    ).write()
+suspend fun runServer(serverRun: suspend () -> Unit) = runBlocking {
+    serverRun()
 }
 
 fun runClient(clientRun: () -> Unit) {

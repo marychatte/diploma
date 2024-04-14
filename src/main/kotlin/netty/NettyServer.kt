@@ -12,10 +12,6 @@ class NettyServer(private val numberOfClients: Int, private val serverPort: Int)
 
     private val nettyChannelInitializer = NettyChannelInitializer(numberOfClients)
 
-    var timeNano: Long = -1
-        get() = nettyChannelInitializer.timeNano
-        private set
-
     fun start() {
         val serverBootstrap = ServerBootstrap()
         serverBootstrap.group(bossGroup, workerGroup)

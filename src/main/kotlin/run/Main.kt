@@ -6,7 +6,7 @@ import kotlinx.cli.ArgType
 suspend fun main(args: Array<String>) {
     val parser = ArgParser("run")
     val service by parser.argument(ArgType.Choice<Service>(), description = "server or client")
-    val type by parser.argument(ArgType.Choice<TYPE>(), description = "blocking or nonblocking")
+    val type by parser.argument(ArgType.Choice<TYPE>(), description = "blocking, reactor, netty or eventloop")
     parser.parse(args)
 
     when (service) {
@@ -20,12 +20,7 @@ suspend fun main(args: Array<String>) {
         }
 
         Service.CLIENT -> {
-            when (type) {
-                TYPE.BLOCKING -> runBlockingClient()
-                TYPE.REACTOR -> TODO("not implemented")
-                TYPE.NETTY -> TODO("not implemented")
-                TYPE.EVENTLOOP -> TODO("not implemented")
-            }
+            runBlockingClient()
         }
     }
 }
