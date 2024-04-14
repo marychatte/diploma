@@ -5,6 +5,10 @@ import java.nio.channels.SelectionKey
 
 inline val SelectionKey.attachment get() = attachment() as Attachment
 
+/**
+ * Attachment for SelectionKey
+ * It contains task for each interest and allows to run them and resume the continuation
+ */
 class Attachment {
     private var acceptTask: Task<Any?>? = null
     private var readTask: Task<Any?>? = null
