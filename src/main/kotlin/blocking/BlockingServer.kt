@@ -33,13 +33,21 @@ class BlockingServer {
                     val receivedByteArray = ByteArray(REQUEST_SIZE)
                     inputStream.read(receivedByteArray)
 
-                    if (!receivedByteArray.isHttRequest()) break
+                    if (!DEBUG) {
+                        if (!receivedByteArray.isHttRequest()) break
+                    }
 
-//                    receivedByteArray.checkRequest()
+                    if (DEBUG) {
+                        receivedByteArray.checkRequest()
+                    }
 
                     val outputStream = DataOutputStream(clientSocket.getOutputStream())
                     outputStream.write(RESPONSE)
                     outputStream.flush()
+
+                    if (DEBUG) {
+                        break
+                    }
                 }
                 clientSocket.close()
             } catch (e: Exception) {

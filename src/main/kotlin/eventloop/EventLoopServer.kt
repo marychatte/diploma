@@ -4,15 +4,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import utils.REQUEST_SIZE
-import utils.RESPONSE_BUFFER
+import utils.*
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
 
-class EventLoopServer(private val numberOfClients: Int, private val serverPort: Int) {
+class EventLoopServer(private val serverPort: Int) {
     private val serverChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
-        bind(InetSocketAddress(serverPort), numberOfClients + 1)
+        bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
         configureBlocking(false)
     }
 
@@ -24,7 +23,7 @@ class EventLoopServer(private val numberOfClients: Int, private val serverPort: 
         coroutineScope {
             val channel = eventLoop.register(serverChannel)
 
-            for (i in 1..numberOfClients) {
+            while (true) {
                 processClient(channel, this)
             }
         }
@@ -39,11 +38,24 @@ class EventLoopServer(private val numberOfClients: Int, private val serverPort: 
         val connection = channel.acceptConnection()
 
         serverScope.launch {
-            connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
+            while (true) {
+                val receivedRequest = ByteBuffer.allocate(REQUEST_SIZE)
+                connection.performRead {
+                    it.read(receivedRequest)
+                }
 
-            val readBuffer = ByteBuffer.allocate(REQUEST_SIZE)
-            connection.performRead {
-                it.read(readBuffer)
+                if (!DEBUG) {
+                    if (!receivedRequest.isHttRequest()) break
+                }
+                if (DEBUG) {
+                    receivedRequest.checkRequest()
+                }
+
+                connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
+
+                if (DEBUG) {
+                    break
+                }
             }
         }
     }

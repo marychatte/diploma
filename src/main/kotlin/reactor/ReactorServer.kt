@@ -3,6 +3,7 @@ package reactor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import utils.DEBUG
 import utils.RESPONSE_BUFFER
 import utils.checkRequest
 import utils.isHttRequest
@@ -26,14 +27,12 @@ class ReactorServer(private val serverPort: Int) {
 
             val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
 
-            var i = 1
             while (true) {
                 try {
-                    processClient(this, selectorManager, selectionKeyAccept, i)
+                    processClient(this, selectorManager, selectionKeyAccept)
                 } catch (e: Throwable) {
                     println("processClient exception: ${e.message}")
                 }
-                i++
             }
 
             selectorManager.cancel()
@@ -44,7 +43,6 @@ class ReactorServer(private val serverPort: Int) {
         scope: CoroutineScope,
         selectorManager: ReactorSelectorManager,
         acceptSelectionKey: SelectionKey,
-        i: Int,
     ) {
         selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
 
@@ -61,10 +59,18 @@ class ReactorServer(private val serverPort: Int) {
                 while (true) {
                     val receivedBuffer = clientChannel.readFrom(selectionKey, selectorManager)
 
-                    if (!receivedBuffer.isHttRequest()) break
-                    receivedBuffer.checkRequest()
+                    if (!DEBUG) {
+                        if (!receivedBuffer.isHttRequest()) break
+                    }
+                    if (DEBUG) {
+                        receivedBuffer.checkRequest()
+                    }
 
                     clientChannel.writeTo(selectionKey, selectorManager, RESPONSE_BUFFER.duplicate())
+
+                    if (DEBUG) {
+                        break
+                    }
                 }
             } catch (e: Throwable) {
                 println("Exception: ${e.message}")

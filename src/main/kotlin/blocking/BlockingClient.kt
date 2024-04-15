@@ -13,13 +13,13 @@ class BlockingClient(private val serverAddress: String, private val serverPort: 
         val clientSocket = Socket(serverAddress, serverPort)
 
         val outputStream = DataOutputStream(clientSocket.getOutputStream())
-        println("connected")
         outputStream.write(REQUEST)
         outputStream.flush()
 
         val inputStream = DataInputStream(clientSocket.getInputStream())
         val receivedByteArray = ByteArray(RESPONSE_SIZE)
         inputStream.read(receivedByteArray)
+
         require(receivedByteArray.contentEquals(RESPONSE))
 
         clientSocket.close()
