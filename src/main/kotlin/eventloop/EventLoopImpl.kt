@@ -118,6 +118,10 @@ class EventLoopImpl : EventLoop {
             runTask(SelectionKey.OP_WRITE) { body(channel) }
         }
 
+        override fun close() {
+            channel.close()
+        }
+
         private suspend fun <T> runTask(interest: Int, body: suspend () -> T): T {
             val key = addInterest(channel, interest)
             return key.attachment.runTask(interest, body).also {

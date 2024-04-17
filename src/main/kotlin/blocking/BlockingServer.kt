@@ -3,7 +3,9 @@ package blocking
 import utils.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.net.ConnectException
 import java.net.ServerSocket
+import java.net.SocketException
 import java.net.StandardSocketOptions
 
 class BlockingServer {
@@ -49,9 +51,11 @@ class BlockingServer {
                         break
                     }
                 }
-                clientSocket.close()
-            } catch (e: Exception) {
+            } catch (_: SocketException) {
+            }  catch (e: ConnectException) {
                 println("Exception: ${e.message}")
+            } finally {
+                clientSocket.close()
             }
         }.start()
     }

@@ -26,7 +26,7 @@ val RESPONSE_SIZE = RESPONSE.size
 
 const val SERVER_ADDRESS = "localhost"
 const val SERVER_PORT = 12345
-const val SERVER_BACKLOG = 20000
+const val SERVER_BACKLOG = 32760
 
 const val COUNT_OF_ITERATIONS = 1
 

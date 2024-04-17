@@ -6,6 +6,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import utils.*
 import java.net.InetSocketAddress
+import java.net.SocketException
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
 
@@ -38,24 +39,31 @@ class EventLoopServer(private val serverPort: Int) {
         val connection = channel.acceptConnection()
 
         serverScope.launch {
-            while (true) {
-                val receivedRequest = ByteBuffer.allocate(REQUEST_SIZE)
-                connection.performRead {
-                    it.read(receivedRequest)
-                }
+            try {
+                while (true) {
+                    val receivedRequest = ByteBuffer.allocate(REQUEST_SIZE)
+                    connection.performRead {
+                        it.read(receivedRequest)
+                    }
 
-                if (!DEBUG) {
-                    if (!receivedRequest.isHttRequest()) break
-                }
-                if (DEBUG) {
-                    receivedRequest.checkRequest()
-                }
+                    if (!DEBUG) {
+                        if (!receivedRequest.isHttRequest()) break
+                    }
+                    if (DEBUG) {
+                        receivedRequest.checkRequest()
+                    }
 
-                connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
+                    connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
 
-                if (DEBUG) {
-                    break
+                    if (DEBUG) {
+                        break
+                    }
                 }
+            } catch (_: SocketException) {
+            } catch (e: Throwable) {
+                println("Exception: ${e.message} ")
+            } finally {
+                connection.close()
             }
         }
     }

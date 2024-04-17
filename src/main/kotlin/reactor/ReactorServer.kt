@@ -1,13 +1,11 @@
 package reactor
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
-import utils.DEBUG
-import utils.RESPONSE_BUFFER
-import utils.checkRequest
-import utils.isHttRequest
+import utils.*
 import java.net.InetSocketAddress
+import java.net.SocketException
 import java.net.StandardSocketOptions
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
@@ -15,27 +13,20 @@ import java.nio.channels.ServerSocketChannel
 class ReactorServer(private val serverPort: Int) {
     private val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
         configureBlocking(false)
-        bind(InetSocketAddress(serverPort))
+        bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
         setOption(StandardSocketOptions.SO_REUSEPORT, true)
         setOption(StandardSocketOptions.SO_REUSEADDR, true)
     }
 
+    private val selectorManager = ReactorSelectorManager().apply { runOn() }
+
     suspend fun start() {
-        supervisorScope {
-            val selectorManager = ReactorSelectorManager()
-            selectorManager.runOn(this)
+        val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
 
-            val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
-
+        coroutineScope {
             while (true) {
-                try {
-                    processClient(this, selectorManager, selectionKeyAccept)
-                } catch (e: Throwable) {
-                    println("processClient exception: ${e.message}")
-                }
+                processClient(this, selectorManager, selectionKeyAccept)
             }
-
-            selectorManager.cancel()
         }
     }
 
@@ -45,7 +36,6 @@ class ReactorServer(private val serverPort: Int) {
         acceptSelectionKey: SelectionKey,
     ) {
         selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
-
         val clientChannel = serverSocketChannel.accept()
             ?.apply { configureBlocking(false) }
             ?: return
@@ -55,12 +45,12 @@ class ReactorServer(private val serverPort: Int) {
                 clientChannel,
                 SelectionKey.OP_READ or SelectionKey.OP_WRITE
             )
+
             try {
                 while (true) {
                     val receivedBuffer = clientChannel.readFrom(selectionKey, selectorManager)
-
-                    if (!DEBUG) {
-                        if (!receivedBuffer.isHttRequest()) break
+                    if (!receivedBuffer.isHttRequest()) {
+                        break
                     }
                     if (DEBUG) {
                         receivedBuffer.checkRequest()
@@ -72,11 +62,13 @@ class ReactorServer(private val serverPort: Int) {
                         break
                     }
                 }
+            } catch (_: SocketException) {
             } catch (e: Throwable) {
                 println("Exception: ${e.message}")
+            } finally {
+                selectionKey.cancel()
+                clientChannel.close()
             }
-            selectionKey.cancel()
-            clientChannel.close()
         }
     }
 

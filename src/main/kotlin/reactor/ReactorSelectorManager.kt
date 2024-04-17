@@ -1,13 +1,13 @@
 package reactor
 
-import kotlinx.coroutines.*
-import java.io.Closeable
-import java.nio.channels.CancelledKeyException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.nio.channels.SelectableChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -16,8 +16,10 @@ class ReactorSelectorManager {
 
     private var runJob: Job? = null
 
-    fun cancel() {
-        runJob?.cancel()
+    fun runOn() {
+        runJob = CoroutineScope(Dispatchers.IO).launch {
+            run()
+        }
     }
 
     fun runOn(scope: CoroutineScope) {

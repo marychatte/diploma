@@ -46,4 +46,6 @@ interface Connection {
     suspend fun performRead(body: (SocketChannel) -> Unit)
 
     suspend fun performWrite(body: (SocketChannel) -> Unit)
+
+    fun close()
 }
