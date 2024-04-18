@@ -14,6 +14,10 @@ repositories {
     mavenCentral()
 }
 
+application {
+    mainClass = "run.MainKt"
+}
+
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:$kotlinx_cli")
@@ -27,4 +31,23 @@ tasks.test {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "run.MainKt"
+    }
+}
+
+tasks.create<Jar>("fatJar") {
+    group = "build"
+    manifest {
+        attributes["Main-Class"] = "run.MainKt"
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+
+    with(tasks["jar"] as CopySpec)
 }
