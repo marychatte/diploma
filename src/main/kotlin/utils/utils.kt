@@ -2,12 +2,12 @@ package utils
 
 import java.nio.ByteBuffer
 
-fun ByteArray.isHttRequest(): Boolean {
-    return String(take(HTTP_REQUEST.length).toByteArray()) == HTTP_REQUEST
+fun ByteArray.isHttpRequest(): Boolean {
+    return String(this).take(HTTP_REQUEST.length) == HTTP_REQUEST
 }
 
-fun ByteBuffer.isHttRequest(): Boolean {
-    return String(array().take(HTTP_REQUEST.length).toByteArray()) == HTTP_REQUEST
+fun ByteBuffer.isHttpRequest(): Boolean {
+    return String(array()).take(HTTP_REQUEST.length) == HTTP_REQUEST
 }
 
 fun ByteArray.checkRequest() {

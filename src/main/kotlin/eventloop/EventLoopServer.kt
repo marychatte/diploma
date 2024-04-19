@@ -47,7 +47,7 @@ class EventLoopServer(private val serverPort: Int) {
                     }
 
                     if (!DEBUG) {
-                        if (!receivedRequest.isHttRequest()) break
+                        if (!receivedRequest.isHttpRequest()) break
                     }
                     if (DEBUG) {
                         receivedRequest.checkRequest()

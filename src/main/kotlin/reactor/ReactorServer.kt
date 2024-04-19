@@ -49,7 +49,7 @@ class ReactorServer(private val serverPort: Int) {
             try {
                 while (true) {
                     val receivedBuffer = clientChannel.readFrom(selectionKey, selectorManager)
-                    if (!receivedBuffer.isHttRequest()) {
+                    if (!receivedBuffer.isHttpRequest()) {
                         break
                     }
                     if (DEBUG) {

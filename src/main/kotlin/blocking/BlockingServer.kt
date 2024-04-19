@@ -3,7 +3,6 @@ package blocking
 import utils.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.SocketException
 import java.net.StandardSocketOptions
@@ -27,16 +26,16 @@ class BlockingServer {
 
     private fun handleClient() {
         val clientSocket = serverSocket.accept()
-
         Thread {
             try {
                 while (true) {
                     val inputStream = DataInputStream(clientSocket.getInputStream())
-                    val receivedByteArray = ByteArray(REQUEST_SIZE)
-                    inputStream.read(receivedByteArray)
+                    val receivedByteArray = read(inputStream)
 
                     if (!DEBUG) {
-                        if (!receivedByteArray.isHttRequest()) break
+                        if (!receivedByteArray.isHttpRequest()) {
+                            break
+                        }
                     }
 
                     if (DEBUG) {
@@ -51,12 +50,22 @@ class BlockingServer {
                         break
                     }
                 }
-            } catch (_: SocketException) {
-            }  catch (e: ConnectException) {
+            } catch (e: SocketException) {
+                println("Socket exception ${e.message}")
+            } catch (e: Exception) {
                 println("Exception: ${e.message}")
             } finally {
                 clientSocket.close()
             }
         }.start()
+    }
+
+    private fun read(inputStream: DataInputStream): ByteArray {
+        val receivedByteArray = ByteArray(REQUEST_SIZE)
+        var readBytes = 0
+        while (readBytes != -1 && readBytes < REQUEST_SIZE) {
+            readBytes += inputStream.read(receivedByteArray, readBytes, REQUEST_SIZE - readBytes)
+        }
+        return receivedByteArray
     }
 }

@@ -9,6 +9,7 @@ const val BODY_SIZE = 3 * 1024 // 3 KB
 val BODY = ByteArray(BODY_SIZE) { '0'.code.toByte() }
 
 private const val REQUEST_HEADERS = HTTP_REQUEST + NEW_LINE +
+//        "Host: 209.38.248.52:12345" + NEW_LINE +
         "Host: localhost:12345" + NEW_LINE +
         "Content-Length: 3072" + NEW_LINE +
         NEW_LINE
@@ -32,4 +33,4 @@ const val COUNT_OF_ITERATIONS = 1
 
 const val COUNT_OF_CLIENTS = 1000
 
-const val DEBUG = false
+const val DEBUG = true
