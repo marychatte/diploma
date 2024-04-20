@@ -10,12 +10,11 @@ for c in "${count_connections[@]}"; do
   for i in $(seq 1 $count_iterations); do
     echo "Connections: $c, Iteration: $i"
 
-    # Kill all java processes, run the server and run wrk to warm up the server
-    killall -9 java
-    java -jar ./build/libs/diploma-1.0-SNAPSHOT.jar server $server_type &
+    command="bash ~/run.sh $server_type &"
+    ssh -t root@209.38.248.52 $command >> /dev/null
     sleep 5
-    wrk -c1000 -t8 -d5s -s ./wrk/script.lua --timeout 1000 http://localhost:12345/
-    #
+
+    wrk -c1000 -t8 -d10s -s ./wrk/script.lua --timeout 10000 http://209.38.248.52:12345/
 
     t=0
     if [[ "$c" -gt 8 ]]; then
@@ -23,9 +22,7 @@ for c in "${count_connections[@]}"; do
     else
       t=$c
     fi
-    wrk -c$c -t$t -d10s -s ./wrk/script.lua --latency --timeout 1000 http://localhost:12345/ >> ${result_file}
+    wrk -c$c -t$t -d60s -s ./wrk/script.lua --latency --timeout 100000 http://209.38.248.52:12345/ >> ${result_file}
     printf '\n' >> ${result_file}
   done
 done
-
-killall -9 java
