@@ -33,4 +33,4 @@ const val COUNT_OF_ITERATIONS = 1
 
 const val COUNT_OF_CLIENTS = 1000
 
-const val DEBUG = true
+const val DEBUG = false
