@@ -24,6 +24,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-cli:$kotlinx_cli")
     implementation("io.netty:netty-all:$netty")
     implementation("io.ktor:ktor-network:$ktor")
+    implementation("io.ktor:ktor-server-core-jvm:$ktor")
+    implementation("io.ktor:ktor-server-cio-jvm:$ktor")
     testImplementation(kotlin("test"))
 }
 
@@ -52,4 +54,19 @@ tasks.create<Jar>("fatJar") {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 
     with(tasks["jar"] as CopySpec)
+}
+
+jib {
+    container {
+        mainClass = "run.MainKt"
+        ports = listOf("12345")
+    }
+
+    from {
+        image = "eclipse-temurin:17"
+    }
+
+    to {
+        image = "diploma:latest"
+    }
 }

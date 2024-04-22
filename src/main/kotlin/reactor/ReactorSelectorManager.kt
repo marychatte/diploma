@@ -1,12 +1,13 @@
 package reactor
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import java.nio.channels.SelectableChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
+import java.util.concurrent.Executors
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -17,7 +18,7 @@ class ReactorSelectorManager {
     private var runJob: Job? = null
 
     fun runOn() {
-        runJob = CoroutineScope(Dispatchers.IO).launch {
+        runJob = CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher()).launch {
             run()
         }
     }

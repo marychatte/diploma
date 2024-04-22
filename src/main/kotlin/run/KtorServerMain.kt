@@ -1,8 +1,7 @@
 package run
 
-import ktor.ActorSelectorManagerServer
+import ktor.KtorServer
 
 suspend fun runKtorServer() = runServer {
-    val server = ActorSelectorManagerServer()
-    server.start()
+    KtorServer().start()
 }

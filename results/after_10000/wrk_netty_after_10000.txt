@@ -1,0 +1,131 @@
+Server type: netty
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 10000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   284.10ms  934.22ms   8.76s    94.32%
+    Req/Sec     8.24k     3.64k   17.10k    69.96%
+  Latency Distribution
+     50%   69.13ms
+     75%   81.57ms
+     90%   98.11ms
+     99%    5.50s
+  566816 requests in 10.10s, 1.64GB read
+  Socket errors: connect 0, read 2, write 0, timeout 0
+Requests/sec:  56100.70
+Transfer/sec:    166.55MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 15000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   213.29ms  791.35ms   8.60s    95.26%
+    Req/Sec    10.02k     4.47k   26.52k    63.75%
+  Latency Distribution
+     50%   53.38ms
+     75%   60.89ms
+     90%   69.02ms
+     99%    4.79s
+  661331 requests in 10.11s, 1.92GB read
+  Socket errors: connect 0, read 2, write 0, timeout 0
+Requests/sec:  65431.27
+Transfer/sec:    194.25MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 15000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   111.56ms  405.66ms   5.95s    97.51%
+    Req/Sec    11.42k     4.38k   29.63k    62.66%
+  Latency Distribution
+     50%   57.54ms
+     75%   61.33ms
+     90%   69.40ms
+     99%    2.46s
+  522592 requests in 10.09s, 1.52GB read
+  Socket errors: connect 0, read 7, write 0, timeout 0
+Requests/sec:  51804.00
+Transfer/sec:    153.80MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 20000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    73.15ms  270.13ms   6.45s    98.60%
+    Req/Sec    15.87k    11.58k   65.32k    88.01%
+  Latency Distribution
+     50%   54.79ms
+     75%   59.53ms
+     90%   64.10ms
+     99%  992.29ms
+  541384 requests in 10.10s, 1.57GB read
+  Socket errors: connect 0, read 5, write 0, timeout 0
+Requests/sec:  53579.50
+Transfer/sec:    159.07MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 25000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   164.70ms   83.85ms   4.28s    78.07%
+    Req/Sec    16.45k    11.90k   55.96k    71.49%
+  Latency Distribution
+     50%  170.81ms
+     75%  204.01ms
+     90%  238.82ms
+     99%  291.29ms
+  379501 requests in 10.11s, 1.10GB read
+  Socket errors: connect 0, read 3, write 0, timeout 0
+Requests/sec:  37539.44
+Transfer/sec:    111.45MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 25000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   185.22ms  113.54ms   2.52s    48.74%
+    Req/Sec    17.90k    14.66k   56.29k    69.28%
+  Latency Distribution
+     50%  188.17ms
+     75%  295.07ms
+     90%  335.34ms
+     99%  391.52ms
+  326329 requests in 10.12s, 0.95GB read
+  Socket errors: connect 0, read 3, write 0, timeout 0
+Requests/sec:  32259.59
+Transfer/sec:     95.77MB
+
+
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 30000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   225.37ms  104.75ms   2.99s    61.79%
+    Req/Sec    16.07k    11.09k   42.99k    63.16%
+  Latency Distribution
+     50%  218.45ms
+     75%  292.52ms
+     90%  344.82ms
+     99%  490.12ms
+  190638 requests in 11.30s, 565.96MB read
+  Socket errors: connect 1768, read 0, write 0, timeout 0
+Requests/sec:  16877.19
+Transfer/sec:     50.10MB
+
+
+Running 10s test @ http://localhost:12345/
+  8 threads and 30000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   195.48ms  110.02ms   2.55s    55.92%
+    Req/Sec    20.24k    14.35k   60.98k    71.79%
+  Latency Distribution
+     50%  182.08ms
+     75%  278.70ms
+     90%  333.23ms
+     99%  428.68ms
+  260813 requests in 10.94s, 774.30MB read
+  Socket errors: connect 1768, read 0, write 0, timeout 0
+Requests/sec:  23844.21
+Transfer/sec:     70.79MB
+
