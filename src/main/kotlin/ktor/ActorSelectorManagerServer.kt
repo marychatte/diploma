@@ -3,22 +3,24 @@ package ktor
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import utils.*
 import java.net.SocketException
-import java.util.concurrent.Executors
 
 class ActorSelectorManagerServer {
-    private val socket = aSocket(SelectorManager(Executors.newSingleThreadExecutor().asCoroutineDispatcher()))
-        .tcp()
-        .bind(InetSocketAddress(SERVER_ADDRESS, SERVER_PORT)) {
-            backlogSize = SERVER_BACKLOG
-            reuseAddress = true
-            reusePort = true
-        }
 
     suspend fun start() {
         coroutineScope {
+            val socket = aSocket(SelectorManager(coroutineContext))
+                .tcp()
+                .bind(InetSocketAddress(SERVER_ADDRESS, SERVER_PORT)) {
+                    backlogSize = SERVER_BACKLOG
+                    reuseAddress = true
+                    reusePort = true
+                }
+
             socket.use { server ->
                 while (true) {
                     server.accept().launchConnection(this) { connection ->

@@ -1,6 +1,7 @@
 val kotlinx_coroutines: String by project
 val kotlinx_cli: String by project
 val netty: String by project
+val ktor: String by project
 
 plugins {
     kotlin("jvm") version "1.9.22"
@@ -22,6 +23,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:$kotlinx_cli")
     implementation("io.netty:netty-all:$netty")
+    implementation("io.ktor:ktor-network:$ktor")
     testImplementation(kotlin("test"))
 }
 

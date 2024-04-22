@@ -3,11 +3,11 @@ package utils
 import java.nio.ByteBuffer
 
 fun ByteArray.isHttpRequest(): Boolean {
-    return String(this).take(HTTP_REQUEST.length) == HTTP_REQUEST
+    return this[0] == 'P'.code.toByte()
 }
 
 fun ByteBuffer.isHttpRequest(): Boolean {
-    return String(array()).take(HTTP_REQUEST.length) == HTTP_REQUEST
+    return this[0] == 'P'.code.toByte()
 }
 
 fun ByteArray.checkRequest() {

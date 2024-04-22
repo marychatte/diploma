@@ -50,8 +50,7 @@ class BlockingServer {
                         break
                     }
                 }
-            } catch (e: SocketException) {
-                println("Socket exception ${e.message}")
+            } catch (_: SocketException) {
             } catch (e: Exception) {
                 println("Exception: ${e.message}")
             } finally {

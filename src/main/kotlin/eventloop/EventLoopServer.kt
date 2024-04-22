@@ -1,9 +1,9 @@
 package eventloop
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import utils.*
 import java.net.InetSocketAddress
 import java.net.SocketException
@@ -16,12 +16,10 @@ class EventLoopServer(private val serverPort: Int) {
         configureBlocking(false)
     }
 
-    private val eventLoop = EventLoopImpl()
-
     suspend fun start() {
-        eventLoop.runOn(CoroutineScope(Dispatchers.IO))
-
+        val eventLoop = EventLoopImpl()
         coroutineScope {
+            eventLoop.runOn(this)
             val channel = eventLoop.register(serverChannel)
 
             while (true) {
@@ -31,7 +29,6 @@ class EventLoopServer(private val serverPort: Int) {
     }
 
     fun stop() {
-        eventLoop.close()
         serverChannel.close()
     }
 
@@ -41,10 +38,7 @@ class EventLoopServer(private val serverPort: Int) {
         serverScope.launch {
             try {
                 while (true) {
-                    val receivedRequest = ByteBuffer.allocate(REQUEST_SIZE)
-                    connection.performRead {
-                        it.read(receivedRequest)
-                    }
+                    val receivedRequest = connection.read()
 
                     if (!DEBUG) {
                         if (!receivedRequest.isHttpRequest()) break
@@ -53,7 +47,7 @@ class EventLoopServer(private val serverPort: Int) {
                         receivedRequest.checkRequest()
                     }
 
-                    connection.performWrite { it.write(RESPONSE_BUFFER.duplicate()) }
+                    connection.write(RESPONSE_BUFFER.duplicate())
 
                     if (DEBUG) {
                         break
@@ -65,6 +59,35 @@ class EventLoopServer(private val serverPort: Int) {
             } finally {
                 connection.close()
             }
+        }
+    }
+
+    private suspend fun Connection.read(): ByteBuffer {
+        val receivedRequest = ByteBuffer.allocate(REQUEST_SIZE)
+        var readCount = 0
+        while (true) {
+            performRead {
+                readCount += it.read(receivedRequest)
+            }
+            if (readCount == -1 || readCount >= REQUEST_SIZE) {
+                break
+            }
+            yield()
+        }
+
+        return receivedRequest
+    }
+
+    private suspend fun Connection.write(response: ByteBuffer) {
+        var writeCount = 0
+        while (true) {
+            performWrite {
+                writeCount += it.write(response)
+            }
+            if (writeCount >= RESPONSE_SIZE) {
+                break
+            }
+            yield()
         }
     }
 }

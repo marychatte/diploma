@@ -4,8 +4,6 @@ import kotlinx.coroutines.*
 import java.nio.channels.*
 import java.nio.channels.spi.AbstractSelectableChannel
 
-private suspend fun <T> withBlockingCall(body: suspend CoroutineScope.() -> T): T = withContext(Dispatchers.IO, body)
-
 class EventLoopImpl : EventLoop {
     private val taskQueue = ArrayDeque<Task<*>>()
 
@@ -26,9 +24,8 @@ class EventLoopImpl : EventLoop {
         while (true) {
             runAllPendingTasks()
 
-            withBlockingCall {
-                selector.select(SELECTOR_TIMEOUT_MILLIS)
-            }
+            yield()
+            selector.select(SELECTOR_TIMEOUT_MILLIS)
 
             val selectionKeys = selector.selectedKeys().iterator()
             while (selectionKeys.hasNext()) {
@@ -39,10 +36,8 @@ class EventLoopImpl : EventLoop {
                     if (!key.isValid) continue
                     key.attachment.runTaskAndResumeContinuation(key)
                 } catch (e: Throwable) {
-                    withBlockingCall {
-                        key.channel().close()
-                        key.attachment.cancel(e)
-                    }
+                    key.channel().close()
+                    key.attachment.cancel(e)
                 }
             }
         }

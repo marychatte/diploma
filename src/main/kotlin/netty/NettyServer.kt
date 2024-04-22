@@ -8,14 +8,13 @@ import utils.SERVER_BACKLOG
 
 
 class NettyServer(private val serverPort: Int) {
-    private val bossGroup = NioEventLoopGroup(1)
-    private val workerGroup = NioEventLoopGroup()
+    private val eventloopGroup = NioEventLoopGroup(1)
 
     private val nettyChannelInitializer = NettyChannelInitializer()
 
     fun start() {
         val serverBootstrap = ServerBootstrap()
-        serverBootstrap.group(bossGroup, workerGroup)
+        serverBootstrap.group(eventloopGroup)
             .channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_BACKLOG, SERVER_BACKLOG)
             .childHandler(nettyChannelInitializer)
@@ -26,7 +25,6 @@ class NettyServer(private val serverPort: Int) {
     }
 
     fun stop() {
-        bossGroup.shutdownGracefully()
-        workerGroup.shutdownGracefully()
+        eventloopGroup.shutdownGracefully()
     }
 }
