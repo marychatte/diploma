@@ -55,18 +55,3 @@ tasks.create<Jar>("fatJar") {
 
     with(tasks["jar"] as CopySpec)
 }
-
-jib {
-    container {
-        mainClass = "run.MainKt"
-        ports = listOf("12345")
-    }
-
-    from {
-        image = "eclipse-temurin:17"
-    }
-
-    to {
-        image = "diploma:latest"
-    }
-}

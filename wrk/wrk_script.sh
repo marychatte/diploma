@@ -6,7 +6,7 @@ suffix=$3
 result_file="./results/$dir/wrk_${server_type}_$suffix.txt"
 count_connections=("$@")
 count_connections=("${count_connections[@]:3}")
-count_iterations=3
+count_iterations=5
 #host="http://209.38.248.52:12345/"
 host="http://localhost:12345/"
 
@@ -18,9 +18,10 @@ for c in "${count_connections[@]}"; do
 #    command="bash ~/run.sh $server_type &"
 #    echo "Running command: $command"
 #    ssh -t root@209.38.248.52 -t $command >> /dev/null
-    killall -9 java
-    java -jar ./build/libs/diploma-1.0-SNAPSHOT.jar server $server_type &
-    sleep 3
+    kill -9 $(lsof -t -i:12345)
+    sleep 2
+    java -Xmx6g -jar ./build/libs/diploma-1.0-SNAPSHOT.jar server $server_type &
+    sleep 5
 
     wrk -c1000 -t8 -d10s -s ./wrk/script.lua --timeout 10000 $host
 

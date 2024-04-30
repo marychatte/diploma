@@ -1,4 +1,7 @@
 #!/bin/bash
-count_connections=(1 10 50 100 200 300 400 500 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000)
+count_connections=(1 2 4 6 8 10 20 40 50 70 90 100 200 300 400 500 700 900)
+for ((i = 1000; i <= 10000; i += 200)); do
+    count_connections+=("$i")
+done
 
-bash ./wrk/wrk_script.sh $1 "up_to_10000" "up_to_10000_4" "${count_connections[@]}"
+bash ./wrk/wrk_script.sh $1 "local_from_1_to_3000" "_22_04" "${count_connections[@]}"
