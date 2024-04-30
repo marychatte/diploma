@@ -38,9 +38,10 @@ class ActorSelectorManagerServer {
                             }
 
                             connection.output.writeByteArray()
+                            connection.output.flush()
 
                             if (DEBUG) {
-                                return@launchConnection
+                                break
                             }
                         }
                     }
@@ -53,7 +54,7 @@ class ActorSelectorManagerServer {
         scope.launch {
             use {
                 try {
-                    block(connection())
+                    block(it.connection())
                 } catch (_: SocketException) {
                 } catch (e: Exception) {
                     println("Exception: ${e.message}")

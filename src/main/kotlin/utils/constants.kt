@@ -8,9 +8,10 @@ const val HTTP_REQUEST = "POST / HTTP/1.1"
 const val BODY_SIZE = 3 * 1024 // 3 KB
 val BODY = ByteArray(BODY_SIZE) { '0'.code.toByte() }
 
+const val SERVER_ADDRESS = "localhost"
+const val SERVER_PORT = 12345
 private const val REQUEST_HEADERS = HTTP_REQUEST + NEW_LINE +
-//        "Host: 209.38.248.52:12345" + NEW_LINE +
-        "Host: localhost:12345" + NEW_LINE +
+        "Host: $SERVER_ADDRESS:$SERVER_PORT" + NEW_LINE +
         "Content-Length: 3072" + NEW_LINE +
         NEW_LINE
 val REQUEST = REQUEST_HEADERS.toByteArray() + BODY
@@ -25,8 +26,6 @@ val RESPONSE = RESPONSE_HEADERS.toByteArray() + BODY
 val RESPONSE_BUFFER: ByteBuffer = ByteBuffer.wrap(RESPONSE)
 val RESPONSE_SIZE = RESPONSE.size
 
-const val SERVER_ADDRESS = "localhost"
-const val SERVER_PORT = 12345
 const val SERVER_BACKLOG = 32760
 
 const val COUNT_OF_ITERATIONS = 1

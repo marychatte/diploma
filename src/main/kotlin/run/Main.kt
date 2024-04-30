@@ -17,6 +17,7 @@ suspend fun main(args: Array<String>) {
                 TYPE.NETTY -> runNettyServer()
                 TYPE.EVENTLOOP -> runEventLoopServer()
                 TYPE.KTOR -> runKtorServer()
+                TYPE.ASM -> runAsmServer()
             }
         }
 
@@ -37,4 +38,5 @@ enum class TYPE {
     NETTY,
     EVENTLOOP,
     KTOR,
+    ASM,
 }
