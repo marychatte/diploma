@@ -3,10 +3,10 @@ package run
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 
-suspend fun main(args: Array<String>) {
+fun main(args: Array<String>) {
     val parser = ArgParser("run")
     val service by parser.argument(ArgType.Choice<Service>(), description = "server or client")
-    val type by parser.argument(ArgType.Choice<TYPE>(), description = "blocking or nonblocking")
+    val type by parser.argument(ArgType.Choice<TYPE>(), description = "blocking, reactor, netty, eventloop, ktor")
     parser.parse(args)
 
     when (service) {
@@ -16,16 +16,14 @@ suspend fun main(args: Array<String>) {
                 TYPE.REACTOR -> runReactorServer()
                 TYPE.NETTY -> runNettyServer()
                 TYPE.EVENTLOOP -> runEventLoopServer()
+                TYPE.EVENTGROUP -> runEventLoopGroupServer()
+                TYPE.KTOR -> runKtorServer()
+                TYPE.ASM -> runAsmServer()
             }
         }
 
         Service.CLIENT -> {
-            when (type) {
-                TYPE.BLOCKING -> runBlockingClient()
-                TYPE.REACTOR -> TODO("not implemented")
-                TYPE.NETTY -> TODO("not implemented")
-                TYPE.EVENTLOOP -> TODO("not implemented")
-            }
+            runBlockingClient()
         }
     }
 }
@@ -40,4 +38,7 @@ enum class TYPE {
     REACTOR,
     NETTY,
     EVENTLOOP,
+    EVENTGROUP,
+    KTOR,
+    ASM,
 }

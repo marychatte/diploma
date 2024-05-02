@@ -1,11 +1,17 @@
 package run
 
+import eventgroup.EventLoopGroupServer
 import eventloop.EventLoopServer
-import utils.COUNT_OF_CLIENTS
 import utils.SERVER_PORT
 
-suspend fun runEventLoopServer() = runServer("eventloop") {
-    val server = EventLoopServer(COUNT_OF_CLIENTS, SERVER_PORT)
+fun runEventLoopServer() = runServer {
+    val server = EventLoopServer(SERVER_PORT)
     server.start()
-    return@runServer server.timeNano
+    server.stop()
+}
+
+fun runEventLoopGroupServer() = runServer {
+    val server = EventLoopGroupServer(SERVER_PORT)
+    server.start()
+    server.stop()
 }

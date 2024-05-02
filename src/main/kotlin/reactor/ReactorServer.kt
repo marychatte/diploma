@@ -1,65 +1,78 @@
 package reactor
 
-import kotlinx.coroutines.*
-import utils.DATA_BUFFER
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import utils.*
 import java.net.InetSocketAddress
+import java.net.SocketException
+import java.net.StandardSocketOptions
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
 
-class ReactorServer(private val numberOfClients: Int, private val serverPort: Int) {
+class ReactorServer(private val serverPort: Int) {
     private val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
         configureBlocking(false)
-        bind(InetSocketAddress(serverPort), numberOfClients + 1)
+        bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
+        setOption(StandardSocketOptions.SO_REUSEPORT, true)
+        setOption(StandardSocketOptions.SO_REUSEADDR, true)
     }
-    private val selectorManager = ReactorSelectorManager()
 
-    var timeNano: Long = -1
-        private set
+    private val selectorManager = ReactorSelectorManager().apply { runOn() }
 
     suspend fun start() {
         val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
 
         coroutineScope {
-            for (i in 1..numberOfClients) {
-                processClient(this, selectionKeyAccept)
+            while (true) {
+                processClient(this, selectorManager, selectionKeyAccept)
             }
         }
-        selectorManager.deleteInterest(selectionKeyAccept, SelectionKey.OP_ACCEPT)
-        timeNano = System.nanoTime() - timeNano
     }
 
-    private suspend fun processClient(scope: CoroutineScope, acceptSelectionKey: SelectionKey) {
-        var clientAccepted = false
-        while (!clientAccepted) {
-            selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
-            val clientChannel = serverSocketChannel.accept()
-                ?.apply { configureBlocking(false) }
-                ?: continue
-            clientAccepted = true
+    private suspend fun processClient(
+        scope: CoroutineScope,
+        selectorManager: ReactorSelectorManager,
+        acceptSelectionKey: SelectionKey,
+    ) {
+        selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
+        val clientChannel = serverSocketChannel.accept()
+            ?.apply { configureBlocking(false) }
+            ?: return
 
-            if (timeNano == -1L) {
-                timeNano = System.nanoTime()
-            }
+        scope.launch {
+            val selectionKey = selectorManager.addInterest(
+                clientChannel,
+                SelectionKey.OP_READ or SelectionKey.OP_WRITE
+            )
 
-            val selectionKey = selectorManager.addInterest(clientChannel, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
-            val writeJob = scope.launch {
-                clientChannel.writeTo(selectionKey, selectorManager, DATA_BUFFER.duplicate())
-            }
-            val readJob = scope.launch {
-                clientChannel.readFrom(selectionKey, selectorManager)
-            }
+            try {
+                while (true) {
+                    val receivedBuffer = clientChannel.readFrom(selectionKey, selectorManager)
+                    if (!receivedBuffer.isHttpRequest()) {
+                        break
+                    }
+                    if (DEBUG) {
+                        receivedBuffer.checkRequest()
+                    }
 
-            writeJob.invokeOnCompletion {
-                readJob.invokeOnCompletion {
-                    selectionKey.cancel()
-                    clientChannel.close()
+                    clientChannel.writeTo(selectionKey, selectorManager, RESPONSE_BUFFER.duplicate())
+
+                    if (DEBUG) {
+                        break
+                    }
                 }
+            } catch (_: SocketException) {
+            } catch (e: Throwable) {
+                println("Exception: ${e.message}")
+            } finally {
+                selectionKey.cancel()
+                clientChannel.close()
             }
         }
     }
 
     fun stop() {
-        selectorManager.close()
         serverSocketChannel.close()
     }
 }
