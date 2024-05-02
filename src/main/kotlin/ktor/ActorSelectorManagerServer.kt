@@ -38,7 +38,6 @@ class ActorSelectorManagerServer {
                             }
 
                             connection.output.writeByteArray()
-                            connection.output.flush()
 
                             if (DEBUG) {
                                 break

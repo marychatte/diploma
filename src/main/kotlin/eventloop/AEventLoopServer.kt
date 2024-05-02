@@ -4,35 +4,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import run.newSingleThreadScope
 import utils.*
 import java.net.InetSocketAddress
 import java.net.SocketException
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
 
-class EventLoopServer(private val serverPort: Int) {
-    private val serverChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
+abstract class AEventLoopServer(private val serverPort: Int) {
+    protected val serverChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
         bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
         configureBlocking(false)
     }
 
-    suspend fun start() {
-        val eventLoop = EventLoopImpl()
-        coroutineScope {
-            eventLoop.runOn(this)
-            val channel = eventLoop.register(serverChannel)
-
-            while (true) {
-                processClient(channel, this)
-            }
-        }
-    }
+    abstract suspend fun start()
 
     fun stop() {
         serverChannel.close()
     }
 
-    private suspend fun processClient(channel: RegisteredServerChannel, serverScope: CoroutineScope) {
+    protected suspend fun processClient(channel: RegisteredServerChannel, serverScope: CoroutineScope) {
         val connection = channel.acceptConnection()
 
         serverScope.launch {
@@ -92,3 +83,17 @@ class EventLoopServer(private val serverPort: Int) {
     }
 }
 
+class EventLoopServer(serverPort: Int) : AEventLoopServer(serverPort) {
+    override suspend fun start() {
+        val eventLoop = EventLoopImpl()
+
+        eventLoop.runOn(newSingleThreadScope())
+        val channel = eventLoop.register(serverChannel)
+
+        coroutineScope {
+            while (true) {
+                processClient(channel, this)
+            }
+        }
+    }
+}

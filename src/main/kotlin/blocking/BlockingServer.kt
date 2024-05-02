@@ -1,8 +1,7 @@
 package blocking
 
 import utils.*
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import java.io.InputStream
 import java.net.ServerSocket
 import java.net.SocketException
 import java.net.StandardSocketOptions
@@ -29,7 +28,7 @@ class BlockingServer {
         Thread {
             try {
                 while (true) {
-                    val inputStream = DataInputStream(clientSocket.getInputStream())
+                    val inputStream = clientSocket.getInputStream()
                     val receivedByteArray = read(inputStream)
 
                     if (!DEBUG) {
@@ -42,7 +41,7 @@ class BlockingServer {
                         receivedByteArray.checkRequest()
                     }
 
-                    val outputStream = DataOutputStream(clientSocket.getOutputStream())
+                    val outputStream = clientSocket.getOutputStream()
                     outputStream.write(RESPONSE)
                     outputStream.flush()
 
@@ -59,7 +58,7 @@ class BlockingServer {
         }.start()
     }
 
-    private fun read(inputStream: DataInputStream): ByteArray {
+    private fun read(inputStream: InputStream): ByteArray {
         val receivedByteArray = ByteArray(REQUEST_SIZE)
         var readBytes = 0
         while (readBytes != -1 && readBytes < REQUEST_SIZE) {

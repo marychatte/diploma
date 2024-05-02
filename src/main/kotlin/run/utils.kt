@@ -1,14 +1,15 @@
 package run
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import utils.COUNT_OF_CLIENTS
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-val singleThreadContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+val serverContext = Executors.newFixedThreadPool(5).asCoroutineDispatcher()
 
-suspend fun runServer(context: CoroutineContext = singleThreadContext, serverRun: suspend () -> Unit) =
+fun runServer(context: CoroutineContext = serverContext, serverRun: suspend () -> Unit) =
     runBlocking(context) {
         serverRun()
     }
@@ -23,4 +24,10 @@ fun runClient(clientRun: () -> Unit) {
             }
         }.apply { start() }
     }.forEach { it.join() }
+}
+
+fun newSingleThreadScope(): CoroutineScope {
+    return Executors.newSingleThreadExecutor().asCoroutineDispatcher().let {
+        CoroutineScope(it)
+    }
 }

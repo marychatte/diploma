@@ -59,16 +59,6 @@ class EventLoopImpl : EventLoop {
         return RegisteredServerChannelImpl(channel, key)
     }
 
-    override suspend fun acceptConnection(channel: SocketChannel): Connection {
-        val key = registerKey(channel, SelectionKey.OP_CONNECT)
-
-        key.attachment.runTask(SelectionKey.OP_CONNECT) {
-            channel.finishConnect()
-        }
-
-        return ConnectionImpl(channel)
-    }
-
     private suspend fun registerKey(channel: AbstractSelectableChannel, interest: Int) = runOnLoopSuspend {
         addInterest(channel, interest)
     }

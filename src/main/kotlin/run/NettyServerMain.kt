@@ -4,7 +4,7 @@ import kotlinx.coroutines.delay
 import netty.NettyServer
 import utils.SERVER_PORT
 
-suspend fun runNettyServer() = runServer {
+fun runNettyServer() = runServer {
     val server = NettyServer(SERVER_PORT)
     server.start()
     delay(5000)

@@ -55,3 +55,15 @@ tasks.create<Jar>("fatJar") {
 
     with(tasks["jar"] as CopySpec)
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.24.0")
+    }
+}
+
+apply(plugin = "kotlinx-atomicfu")

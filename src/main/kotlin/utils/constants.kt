@@ -12,19 +12,19 @@ const val SERVER_ADDRESS = "localhost"
 const val SERVER_PORT = 12345
 private const val REQUEST_HEADERS = HTTP_REQUEST + NEW_LINE +
         "Host: $SERVER_ADDRESS:$SERVER_PORT" + NEW_LINE +
-        "Content-Length: 3072" + NEW_LINE +
+        "Content-Length: $BODY_SIZE" + NEW_LINE +
         NEW_LINE
 val REQUEST = REQUEST_HEADERS.toByteArray() + BODY
 val REQUEST_SIZE = REQUEST.size
 val REQUEST_BUFFER: ByteBuffer = ByteBuffer.wrap(REQUEST)
 
-
-private const val RESPONSE_HEADERS = "HTTP/1.1 200 OK" + NEW_LINE +
+const val HTTP_RESPONSE = "HTTP/1.1 200 OK"
+private const val RESPONSE_HEADERS = HTTP_RESPONSE + NEW_LINE +
         "Content-Length: $BODY_SIZE" + NEW_LINE +
         NEW_LINE
 val RESPONSE = RESPONSE_HEADERS.toByteArray() + BODY
-val RESPONSE_BUFFER: ByteBuffer = ByteBuffer.wrap(RESPONSE)
 val RESPONSE_SIZE = RESPONSE.size
+val RESPONSE_BUFFER: ByteBuffer = ByteBuffer.wrap(RESPONSE)
 
 const val SERVER_BACKLOG = 32760
 
