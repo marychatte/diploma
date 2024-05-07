@@ -1,17 +1,17 @@
 package eventgroup
 
 import eventloop.AEventLoopServer
-import kotlinx.coroutines.coroutineScope
+import run.ACTOR_THREADS_COUNT
+import run.SELECTOR_THREADS_COUNT
 
-class EventLoopGroupServer(serverPort: Int) : AEventLoopServer(serverPort) {
+class EventLoopGroupServer : AEventLoopServer() {
     override suspend fun start() {
-        val eventLoop = EventLoopGroup(maxLoops = 3)
-        coroutineScope {
-            val channel = eventLoop.register(serverChannel)
-
-            while (true) {
-                processClient(channel, this)
-            }
+        if (ACTOR_THREADS_COUNT == 0) {
+            error("EventGroup cannot share context with actors")
         }
+
+        val group = EventLoopGroup(SELECTOR_THREADS_COUNT, serverChannels, ::processClient)
+
+        group.start()
     }
 }

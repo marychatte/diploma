@@ -1,10 +1,16 @@
 package eventloop
 
-import kotlinx.coroutines.*
-import java.nio.channels.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import run.selectorContext
+import run.wrapInScope
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
+import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
 import java.nio.channels.spi.AbstractSelectableChannel
 
-class EventLoopImpl : EventLoop {
+class EventLoopImpl : AEventLoop(), EventLoop {
     private val taskQueue = ArrayDeque<Task<*>>()
 
     private val selector = Selector.open()
@@ -14,67 +20,20 @@ class EventLoopImpl : EventLoop {
         selector.close()
     }
 
-    override fun runOn(scope: CoroutineScope) {
-        scope.launch {
-            run()
+    override fun run(): Job {
+        return selectorContext.wrapInScope().launch {
+            _run()
         }
-    }
-
-    private suspend fun run() {
-        while (true) {
-            runAllPendingTasks()
-
-            yield()
-            selector.select(SELECTOR_TIMEOUT_MILLIS)
-
-            val selectionKeys = selector.selectedKeys().iterator()
-            while (selectionKeys.hasNext()) {
-                val key = selectionKeys.next()
-                selectionKeys.remove()
-
-                try {
-                    if (!key.isValid) continue
-                    key.attachment.runTaskAndResumeContinuation(key)
-                } catch (e: Throwable) {
-                    key.channel().close()
-                    key.attachment.cancel(e)
-                }
-            }
-        }
-    }
-
-    private suspend fun runAllPendingTasks() {
-        repeat(taskQueue.size) {
-            taskQueue.removeFirst().runAndResume()
-        }
-    }
-
-    private suspend fun <T> runOnLoopSuspend(body: suspend () -> T): T = suspendCancellableCoroutine { continuation ->
-        taskQueue.addLast(Task(continuation, body))
     }
 
     override suspend fun register(channel: ServerSocketChannel): RegisteredServerChannel {
-        val key = registerKey(channel, SelectionKey.OP_ACCEPT)
+        val key = registerAcceptKey(channel, SelectionKey.OP_ACCEPT)
 
         return RegisteredServerChannelImpl(channel, key)
     }
 
-    private suspend fun registerKey(channel: AbstractSelectableChannel, interest: Int) = runOnLoopSuspend {
+    private suspend fun registerAcceptKey(channel: AbstractSelectableChannel, interest: Int) = runOnLoopSuspend {
         addInterest(channel, interest)
-    }
-
-    private fun addInterest(channel: SelectableChannel, interest: Int): SelectionKey {
-        val result = channel.keyFor(selector)?.apply {
-            interestOpsOr(interest)
-        } ?: let {
-            channel.register(selector, interest, Attachment())
-        }
-        selector.wakeup()
-        return result
-    }
-
-    private fun deleteInterest(selectionKey: SelectionKey, interest: Int) {
-        selectionKey.interestOpsAnd(interest.inv())
     }
 
     private inner class RegisteredServerChannelImpl(
@@ -83,10 +42,8 @@ class EventLoopImpl : EventLoop {
     ) : RegisteredServerChannel {
         override suspend fun acceptConnection(): Connection {
             val result = key.attachment.runTask(SelectionKey.OP_ACCEPT) {
-                withContext(Dispatchers.IO) {
-                    serverChannel.accept().also {
-                        it.configureBlocking(false)
-                    }
+                serverChannel.accept().also {
+                    it.configureBlocking(false)
                 }
             }
 
@@ -113,9 +70,5 @@ class EventLoopImpl : EventLoop {
                 deleteInterest(key, interest)
             }
         }
-    }
-
-    companion object {
-        private const val SELECTOR_TIMEOUT_MILLIS = 100L
     }
 }
