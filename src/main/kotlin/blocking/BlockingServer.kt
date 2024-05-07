@@ -1,22 +1,22 @@
 package blocking
 
-import utils.DATA_ARRAY
-import utils.DATA_ARRAY_SIZE
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import utils.*
+import java.io.InputStream
 import java.net.ServerSocket
+import java.net.SocketException
+import java.net.StandardSocketOptions
 
-class BlockingServer(private val numberOfClients: Int = 1, private val serverPort: Int) {
-    private val serverSocket = ServerSocket(serverPort, numberOfClients + 1)
-    var timeNano: Long = -1
-        private set
+class BlockingServer {
+    private val serverSocket = ServerSocket(SERVER_PORT, SERVER_BACKLOG).apply {
+        soTimeout = Int.MAX_VALUE
+        setOption(StandardSocketOptions.SO_REUSEPORT, true)
+        setOption(StandardSocketOptions.SO_REUSEADDR, true)
+    }
 
     fun start() {
-        repeat(numberOfClients) {
+        while (true) {
             handleClient()
         }
-
-        timeNano = System.nanoTime() - timeNano
     }
 
     fun stop() {
@@ -25,18 +25,45 @@ class BlockingServer(private val numberOfClients: Int = 1, private val serverPor
 
     private fun handleClient() {
         val clientSocket = serverSocket.accept()
-        if (timeNano == -1L) {
-            timeNano = System.nanoTime()
+        Thread {
+            try {
+                while (true) {
+                    val inputStream = clientSocket.getInputStream()
+                    val receivedByteArray = read(inputStream)
+
+                    if (!DEBUG) {
+                        if (!receivedByteArray.isHttpRequest()) {
+                            break
+                        }
+                    }
+
+                    if (DEBUG) {
+                        receivedByteArray.checkRequest()
+                    }
+
+                    val outputStream = clientSocket.getOutputStream()
+                    outputStream.write(RESPONSE)
+                    outputStream.flush()
+
+                    if (DEBUG) {
+                        break
+                    }
+                }
+            } catch (_: SocketException) {
+            } catch (e: Exception) {
+                println("Exception: ${e.message}")
+            } finally {
+                clientSocket.close()
+            }
+        }.start()
+    }
+
+    private fun read(inputStream: InputStream): ByteArray {
+        val receivedByteArray = ByteArray(REQUEST_SIZE)
+        var readBytes = 0
+        while (readBytes != -1 && readBytes < REQUEST_SIZE) {
+            readBytes += inputStream.read(receivedByteArray, readBytes, REQUEST_SIZE - readBytes)
         }
-
-        val outputStream = DataOutputStream(clientSocket.getOutputStream())
-        outputStream.write(DATA_ARRAY)
-        outputStream.flush()
-
-        val inputStream = DataInputStream(clientSocket.getInputStream())
-        val receivedByteArray = ByteArray(DATA_ARRAY_SIZE)
-        inputStream.read(receivedByteArray)
-
-        clientSocket.close()
+        return receivedByteArray
     }
 }

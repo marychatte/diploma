@@ -4,23 +4,19 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import utils.SERVER_BACKLOG
 
 
-class NettyServer(private val numberOfClients: Int, private val serverPort: Int) {
-    private val bossGroup = NioEventLoopGroup(1)
-    private val workerGroup = NioEventLoopGroup()
+class NettyServer(private val serverPort: Int) {
+    private val eventloopGroup = NioEventLoopGroup(1)
 
-    private val nettyChannelInitializer = NettyChannelInitializer(numberOfClients)
-
-    var timeNano: Long = -1
-        get() = nettyChannelInitializer.timeNano
-        private set
+    private val nettyChannelInitializer = NettyChannelInitializer()
 
     fun start() {
         val serverBootstrap = ServerBootstrap()
-        serverBootstrap.group(bossGroup, workerGroup)
+        serverBootstrap.group(eventloopGroup)
             .channel(NioServerSocketChannel::class.java)
-            .option(ChannelOption.SO_BACKLOG, numberOfClients)
+            .option(ChannelOption.SO_BACKLOG, SERVER_BACKLOG)
             .childHandler(nettyChannelInitializer)
 
         val future = serverBootstrap.bind(serverPort).sync()
@@ -29,7 +25,6 @@ class NettyServer(private val numberOfClients: Int, private val serverPort: Int)
     }
 
     fun stop() {
-        bossGroup.shutdownGracefully()
-        workerGroup.shutdownGracefully()
+        eventloopGroup.shutdownGracefully()
     }
 }

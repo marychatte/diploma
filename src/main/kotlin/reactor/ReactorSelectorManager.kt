@@ -1,25 +1,39 @@
 package reactor
 
-import kotlinx.coroutines.*
-import java.io.Closeable
-import java.nio.channels.CancelledKeyException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import java.nio.channels.SelectableChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
+import java.util.concurrent.Executors
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class ReactorSelectorManager : CoroutineScope, Closeable {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default + CoroutineName("ReactorSelectorManager")
-
+class ReactorSelectorManager {
     private val selector: Selector = Selector.open()
 
-    private val job: Job = launch {
+    private var runJob: Job? = null
+
+    fun runOn() {
+        runJob = CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher()).launch {
+            run()
+        }
+    }
+
+    fun runOn(scope: CoroutineScope) {
+        runJob = scope.launch {
+            run()
+        }
+    }
+
+    private fun run() {
         while (true) {
             selector.select()
             val selectionKeys = selector.selectedKeys().iterator()
+
             while (selectionKeys.hasNext()) {
                 val key = selectionKeys.next()
                 selectionKeys.remove()
@@ -28,7 +42,7 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
 
                     val attachment = key.attachment() as Attachment
                     attachment.resumeContinuation(key)
-                } catch (e: CancelledKeyException) {
+                } catch (e: Throwable) {
                     key.channel().close()
                 }
             }
@@ -55,12 +69,6 @@ class ReactorSelectorManager : CoroutineScope, Closeable {
 
     fun deleteInterest(selectionKey: SelectionKey, interest: Int) {
         selectionKey.interestOpsAnd(interest.inv())
-    }
-
-    override fun close() {
-        job.cancel()
-        job.invokeOnCompletion { selector.close() }
-        coroutineContext.cancel()
     }
 }
 

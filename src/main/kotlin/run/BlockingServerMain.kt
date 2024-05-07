@@ -1,12 +1,9 @@
 package run
 
 import blocking.BlockingServer
-import utils.COUNT_OF_CLIENTS
-import utils.SERVER_PORT
 
-suspend fun runBlockingServer() = runServer("blocking") {
-    val server = BlockingServer(COUNT_OF_CLIENTS, SERVER_PORT)
+fun runBlockingServer() = runServer {
+    val server = BlockingServer()
     server.start()
     server.stop()
-    return@runServer server.timeNano
 }
