@@ -60,6 +60,7 @@ class EventLoopGroup(
         override suspend fun acceptConnection(): ConnectionImpl {
             val result = key.attachment.runTask(SelectionKey.OP_ACCEPT) {
                 serverChannel.accept().also {
+                    it.socket().tcpNoDelay = true
                     it.configureBlocking(false)
                 }
             }

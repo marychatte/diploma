@@ -1,10 +1,9 @@
 package run
 
 import reactor.ReactorServer
-import utils.SERVER_PORT
 
 fun runReactorServer() = runServer {
-    val server = ReactorServer(SERVER_PORT)
+    val server = ReactorServer()
     server.start()
     server.stop()
 }

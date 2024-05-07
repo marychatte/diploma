@@ -3,15 +3,9 @@ package blocking
 import utils.*
 import java.io.InputStream
 import java.net.ServerSocket
-import java.net.SocketException
-import java.net.StandardSocketOptions
 
 class BlockingServer {
-    private val serverSocket = ServerSocket(SERVER_PORT, SERVER_BACKLOG).apply {
-        soTimeout = Int.MAX_VALUE
-        setOption(StandardSocketOptions.SO_REUSEPORT, true)
-        setOption(StandardSocketOptions.SO_REUSEADDR, true)
-    }
+    private val serverSocket = ServerSocket(SERVER_PORT, SERVER_BACKLOG)
 
     fun start() {
         while (true) {
@@ -24,7 +18,9 @@ class BlockingServer {
     }
 
     private fun handleClient() {
-        val clientSocket = serverSocket.accept()
+        val clientSocket = serverSocket.accept().apply {
+            setTcpNoDelay(true)
+        }
         Thread {
             try {
                 while (true) {
@@ -49,9 +45,7 @@ class BlockingServer {
                         break
                     }
                 }
-            } catch (_: SocketException) {
-            } catch (e: Exception) {
-                println("Exception: ${e.message}")
+            } catch (_: Throwable) {
             } finally {
                 clientSocket.close()
             }

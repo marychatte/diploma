@@ -43,6 +43,7 @@ class EventLoopImpl : AEventLoop(), EventLoop {
         override suspend fun acceptConnection(): Connection {
             val result = key.attachment.runTask(SelectionKey.OP_ACCEPT) {
                 serverChannel.accept().also {
+                    it.socket().tcpNoDelay = true
                     it.configureBlocking(false)
                 }
             }
