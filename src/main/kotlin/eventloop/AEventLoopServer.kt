@@ -4,29 +4,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
-import run.newSingleThreadScope
+import run.serverChannels
 import utils.*
-import java.net.InetSocketAddress
-import java.net.SocketException
 import java.nio.ByteBuffer
-import java.nio.channels.ServerSocketChannel
 
-abstract class AEventLoopServer(private val serverPort: Int) {
-    protected val serverChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
-        bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
-        configureBlocking(false)
-    }
+abstract class AEventLoopServer {
+    protected val serverChannels = serverChannels()
 
     abstract suspend fun start()
 
     fun stop() {
-        serverChannel.close()
+        serverChannels.forEach { it.close() }
     }
 
-    protected suspend fun processClient(channel: RegisteredServerChannel, serverScope: CoroutineScope) {
-        val connection = channel.acceptConnection()
-
-        serverScope.launch {
+    protected suspend fun processClient(connection: Connection, actorScope: CoroutineScope) {
+        actorScope.launch {
             try {
                 while (true) {
                     val receivedRequest = connection.read()
@@ -34,19 +26,10 @@ abstract class AEventLoopServer(private val serverPort: Int) {
                     if (!DEBUG) {
                         if (!receivedRequest.isHttpRequest()) break
                     }
-                    if (DEBUG) {
-                        receivedRequest.checkRequest()
-                    }
 
                     connection.write(RESPONSE_BUFFER.duplicate())
-
-                    if (DEBUG) {
-                        break
-                    }
                 }
-            } catch (_: SocketException) {
-            } catch (e: Throwable) {
-                println("Exception: ${e.message} ")
+            } catch (_: Throwable) {
             } finally {
                 connection.close()
             }
@@ -83,16 +66,22 @@ abstract class AEventLoopServer(private val serverPort: Int) {
     }
 }
 
-class EventLoopServer(serverPort: Int) : AEventLoopServer(serverPort) {
+class EventLoopServer : AEventLoopServer() {
     override suspend fun start() {
         val eventLoop = EventLoopImpl()
 
-        eventLoop.runOn(newSingleThreadScope())
-        val channel = eventLoop.register(serverChannel)
+        eventLoop.run()
+        val channels = serverChannels.map { eventLoop.register(it) }
 
         coroutineScope {
-            while (true) {
-                processClient(channel, this)
+            val actorScope: CoroutineScope = this
+
+            channels.forEach { channel ->
+                launch {
+                    while (true) {
+                        processClient(channel.acceptConnection(), actorScope)
+                    }
+                }
             }
         }
     }

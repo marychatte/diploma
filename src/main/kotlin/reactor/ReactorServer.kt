@@ -3,44 +3,52 @@ package reactor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import utils.*
-import java.net.InetSocketAddress
-import java.net.SocketException
-import java.net.StandardSocketOptions
+import run.serverChannels
+import utils.DEBUG
+import utils.RESPONSE_BUFFER
+import utils.checkRequest
+import utils.isHttpRequest
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
 
-class ReactorServer(private val serverPort: Int) {
-    private val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
-        configureBlocking(false)
-        bind(InetSocketAddress(serverPort), SERVER_BACKLOG)
-        setOption(StandardSocketOptions.SO_REUSEPORT, true)
-        setOption(StandardSocketOptions.SO_REUSEADDR, true)
-    }
+class ReactorServer {
+    private val serverSocketChannels: List<ServerSocketChannel> = serverChannels()
 
     private val selectorManager = ReactorSelectorManager().apply { runOn() }
 
     suspend fun start() {
-        val selectionKeyAccept = selectorManager.addInterest(serverSocketChannel, SelectionKey.OP_ACCEPT)
+        val selectionAcceptKeys = serverSocketChannels.associateWith {
+            selectorManager.addInterest(it, SelectionKey.OP_ACCEPT)
+        }
 
         coroutineScope {
-            while (true) {
-                processClient(this, selectorManager, selectionKeyAccept)
+            val actorScope: CoroutineScope = this
+
+            selectionAcceptKeys.forEach { (channel, selectionKey) ->
+                launch {
+                    while (true) {
+                        processClient(actorScope, selectorManager, channel, selectionKey)
+                    }
+                }
             }
         }
     }
 
     private suspend fun processClient(
-        scope: CoroutineScope,
+        actorScope: CoroutineScope,
         selectorManager: ReactorSelectorManager,
+        serverChannel: ServerSocketChannel,
         acceptSelectionKey: SelectionKey,
     ) {
         selectorManager.select(acceptSelectionKey, SelectionKey.OP_ACCEPT)
-        val clientChannel = serverSocketChannel.accept()
-            ?.apply { configureBlocking(false) }
+        val clientChannel = serverChannel.accept()
+            ?.apply {
+                socket().tcpNoDelay = true
+                configureBlocking(false)
+            }
             ?: return
 
-        scope.launch {
+        actorScope.launch {
             val selectionKey = selectorManager.addInterest(
                 clientChannel,
                 SelectionKey.OP_READ or SelectionKey.OP_WRITE
@@ -62,9 +70,7 @@ class ReactorServer(private val serverPort: Int) {
                         break
                     }
                 }
-            } catch (_: SocketException) {
-            } catch (e: Throwable) {
-                println("Exception: ${e.message}")
+            } catch (_: Throwable) {
             } finally {
                 selectionKey.cancel()
                 clientChannel.close()
@@ -73,6 +79,6 @@ class ReactorServer(private val serverPort: Int) {
     }
 
     fun stop() {
-        serverSocketChannel.close()
+        serverSocketChannels.forEach { it.close() }
     }
 }

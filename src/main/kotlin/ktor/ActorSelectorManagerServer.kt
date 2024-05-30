@@ -6,45 +6,55 @@ import io.ktor.utils.io.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import run.ports
+import run.selectorContext
 import utils.*
-import java.net.SocketException
 
 class ActorSelectorManagerServer {
+    private val sockets = ports().map { port ->
+        aSocket(SelectorManager(selectorContext))
+            .tcp()
+            .bind(port = port) {
+                backlogSize = SERVER_BACKLOG
+            }
+    }
 
     suspend fun start() {
-        coroutineScope {
-            val socket = aSocket(SelectorManager(coroutineContext))
-                .tcp()
-                .bind(InetSocketAddress(SERVER_ADDRESS, SERVER_PORT)) {
-                    backlogSize = SERVER_BACKLOG
-                    reuseAddress = true
-                    reusePort = true
-                }
+        try {
+            coroutineScope {
+                val actorScope: CoroutineScope = this
 
-            socket.use { server ->
-                while (true) {
-                    server.accept().launchConnection(this) { connection ->
+                sockets.forEach { socket ->
+                    launch {
                         while (true) {
-                            val receivedByteArray = connection.input.readByteArray()
-
-                            if (!DEBUG) {
-                                if (!receivedByteArray.isHttpRequest()) {
-                                    break
-                                }
-                            }
-
-                            if (DEBUG) {
-                                receivedByteArray.checkRequest()
-                            }
-
-                            connection.output.writeByteArray()
-
-                            if (DEBUG) {
-                                break
-                            }
+                            socket.accept().launchConnection(actorScope, ::processClient)
                         }
                     }
                 }
+            }
+        } finally {
+            sockets.forEach { it.close() }
+        }
+    }
+
+    private suspend fun processClient(connection: Connection) {
+        while (true) {
+            val receivedByteArray = connection.input.readByteArray()
+
+            if (!DEBUG) {
+                if (!receivedByteArray.isHttpRequest()) {
+                    break
+                }
+            }
+
+            if (DEBUG) {
+                receivedByteArray.checkRequest()
+            }
+
+            connection.output.writeByteArray()
+
+            if (DEBUG) {
+                break
             }
         }
     }
@@ -54,9 +64,7 @@ class ActorSelectorManagerServer {
             use {
                 try {
                     block(it.connection())
-                } catch (_: SocketException) {
-                } catch (e: Exception) {
-                    println("Exception: ${e.message}")
+                } catch (_: Throwable) {
                 }
             }
         }
